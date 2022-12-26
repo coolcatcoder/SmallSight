@@ -9,4 +9,15 @@ public struct ChunkMaster : IComponentData
 {
     public NativeHashMap<int2, Entity> Chunks;
     //public int ChunkSize; Scrapped for now!
+
+    public uint Seed;
+    public uint MaxSeed;
+
+    public float3 MinBiomeSeed;
+    public float3 MaxBiomeSeed;
+
+    public float3 BiomeSeed;
+    public float BiomeNoiseScale;
+
+    public float TerrainNoiseScale;
 }
