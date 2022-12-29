@@ -11,11 +11,11 @@ using System;
 public partial class Player : SystemBase
 {
     int3 CurrentPos;
-    MapMaker MapSystem;
+    //MapMaker MapSystem;
 
     protected override void OnStartRunning()
     {
-        MapSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<MapMaker>();
+        //MapSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<MapMaker>();
     }
 
     protected override void OnUpdate()

@@ -20,4 +20,13 @@ public struct ChunkMaster : IComponentData
     public float BiomeNoiseScale;
 
     public float TerrainNoiseScale;
+
+    public int3 MaxTeleportBounds;
+    public int3 MinTeleportBounds;
+
+    public Unity.Mathematics.Random RandStruct;
+
+    public NativeList<int2> ChunksToGenerate;
+    public NativeList<int2> ChunksToUnload;
+    public NativeList<int2> ChunksToLoad;
 }
