@@ -29,4 +29,6 @@ public struct ChunkMaster : IComponentData
     public NativeList<int2> ChunksToGenerate;
     public NativeList<int2> ChunksToUnload;
     public NativeList<int2> ChunksToLoad;
+
+    public int ChunkSize;
 }

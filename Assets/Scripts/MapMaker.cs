@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Transforms;
+using Unity.Jobs;
 
 //public partial class MapMaker : SystemBase
 [BurstCompile]
@@ -79,10 +80,25 @@ public partial struct MapMaker : ISystem
     [BurstCompile]
     public void GenerateChunk(int2 Chunk, ref ChunkMaster MapInfo, ref SystemState state)
     {
-        if (!MapInfo.Chunks.ContainsKey(Chunk))
+        if (MapInfo.Chunks.ContainsKey(Chunk))
         {
-            Entity ChunkEntity = state.EntityManager.CreateEntity();
-            MapInfo.Chunks.Add(Chunk, ChunkEntity);
+            return;
+        }
+        Entity ChunkEntity = state.EntityManager.CreateEntity();
+        //state.EntityManager.SetName(ChunkEntity, "Chunk(" + Chunk.x + "," + Chunk.y + ")"); Not burst compatible...
+        MapInfo.Chunks.Add(Chunk, ChunkEntity);
+
+        int3 ChunkCentre = new int3(Chunk.x * MapInfo.ChunkSize + (MapInfo.ChunkSize / 2), -1, Chunk.y * MapInfo.ChunkSize + (MapInfo.ChunkSize / 2));
+        //int3 ChunkMaxCorner = new int3(ChunkCentre.x + (ChunkSize / 2), -1, ChunkCentre.z + (ChunkSize / 2));
+        int3 ChunkMinCorner = new int3(ChunkCentre.x - (MapInfo.ChunkSize / 2), -1, ChunkCentre.z - (MapInfo.ChunkSize / 2));
+
+        for (int x = 0; x < MapInfo.ChunkSize; x++)
+        {
+            for (int z = 0; z < MapInfo.ChunkSize; z++)
+            {
+                int3 WorldPos = new int3(x + ChunkMinCorner.x, -1, z + ChunkMinCorner.z);
+                BiomeData Biome = CalculateBiome(WorldPos, MapInfo, ref state);
+            }
         }
     }
 
@@ -108,6 +124,33 @@ public partial struct MapMaker : ISystem
                 state.EntityManager.RemoveComponent<Disabled>(ChunkEntity);
             }
         }
+    }
+
+    [BurstCompile]
+    public BiomeData CalculateBiome(float3 Pos, ChunkMaster MapInfo, ref SystemState state)
+    {
+        float3 SeededPos1 = Pos;
+        SeededPos1.x += MapInfo.BiomeSeed.x;
+
+        float3 SeededPos2 = Pos;
+        SeededPos1.x += MapInfo.BiomeSeed.y;
+
+        float3 SeededPos3 = Pos;
+        SeededPos3.x += MapInfo.BiomeSeed.z;
+
+        float3 CurrentBiomeNoise = new float3(noise.snoise(SeededPos1.xz * MapInfo.BiomeNoiseScale), noise.snoise(SeededPos2.xz * MapInfo.BiomeNoiseScale), noise.snoise(SeededPos3.xz * MapInfo.BiomeNoiseScale));
+
+        BiomeJob CurrentBiomeJob = new BiomeJob
+        {
+            BiomeNoise = CurrentBiomeNoise
+        };
+
+        CurrentBiomeJob.Run();
+
+        var CurrentBiome = CurrentBiomeJob.CurrentBiome.Value;
+        CurrentBiomeJob.CurrentBiome.Dispose();
+
+        return CurrentBiome;
     }
 
     //    [BurstCompile]
@@ -180,4 +223,21 @@ public partial struct MapMaker : ISystem
     //    {
     //        //unfinished
     //    }
+}
+
+[BurstCompile]
+public struct BiomeJob : IJobEntity
+{
+    public float3 BiomeNoise;
+    public NativeReference<BiomeData> CurrentBiome;
+
+    [BurstCompile]
+    void Execute(ref BiomeData Biome)
+    {
+        if (math.all(BiomeNoise >= Biome.MinNoiseValues) && math.all(BiomeNoise < Biome.MaxNoiseValues))
+        {
+            CurrentBiome = new NativeReference<BiomeData>(Biome,Allocator.TempJob);
+            //break; Removed?
+        }
+    }
 }
