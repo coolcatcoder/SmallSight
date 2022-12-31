@@ -19,6 +19,8 @@ public class MapInfoAuthoring : MonoBehaviour
 
     public int3 MaxTeleportBounds;
     public int3 MinTeleportBounds;
+
+    public int ChunkSize;
 }
 
 class MapInfoBaker : Baker<MapInfoAuthoring>
@@ -35,9 +37,10 @@ class MapInfoBaker : Baker<MapInfoAuthoring>
             TerrainNoiseScale = authoring.TerrainNoiseScale,
             MaxTeleportBounds = authoring.MaxTeleportBounds,
             MinTeleportBounds = authoring.MinTeleportBounds,
-            ChunksToGenerate = new NativeList<int2>(500, Allocator.Persistent),
-            ChunksToUnload = new NativeList<int2>(500, Allocator.Persistent),
-            ChunksToLoad = new NativeList<int2>(500, Allocator.Persistent)
+            //ChunksToGenerate = new NativeList<int2>(500, Allocator.Persistent),
+            //ChunksToUnload = new NativeList<int2>(500, Allocator.Persistent),
+            //ChunksToLoad = new NativeList<int2>(500, Allocator.Persistent),
+            ChunkSize = authoring.ChunkSize
         });
     }
 }

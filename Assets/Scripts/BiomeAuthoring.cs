@@ -30,7 +30,9 @@ public class BiomeBaker : Baker<BiomeAuthoring>
                     FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab),
                     PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
                     Danger = authoring.Features[i].Danger,
-                    IsTerrain = authoring.Features[i].IsTerrain
+                    IsTerrain = authoring.Features[i].IsTerrain,
+                    MinNoiseValue = authoring.Features[i].MinNoiseValue,
+                    MaxNoiseValue = authoring.Features[i].MaxNoiseValue
                 };
             }
 
@@ -58,4 +60,6 @@ public struct GFeature
     public float PercentChanceToSpawn;
     public int Danger;
     public bool IsTerrain;
+    public float MinNoiseValue;
+    public float MaxNoiseValue;
 }

@@ -7,12 +7,10 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
 using System;
+using Unity.Burst;
 
 public partial class Player : SystemBase
 {
-    int3 CurrentPos;
-    //MapMaker MapSystem;
-
     protected override void OnStartRunning()
     {
         //MapSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<MapMaker>();
@@ -77,6 +75,18 @@ public partial class Player : SystemBase
 
         SystemAPI.GetComponentLookup<CameraData>().GetRefRW(PlayerEntity, false).ValueRW.Pos = (int3)NewCamPos;
 
-        CurrentPos = (int3)NewPos;
+        ref ChunkMaster MapInfo = ref SystemAPI.GetSingletonRW<ChunkMaster>().ValueRW;
+        DynamicBuffer<ChunkGenerationQueueData> GenerationQueueInfo = SystemAPI.GetSingletonBuffer<ChunkGenerationQueueData>();
+
+        GenerationQueueInfo.Add(new ChunkGenerationQueueData
+        {
+            ChunkToGenerate = GetChunkNum((int3)NewPos, MapInfo.ChunkSize)
+        });
+    }
+
+    [BurstCompile]
+    public static int2 GetChunkNum(int3 Pos, int ChunkSize)
+    {
+        return new int2((int)math.floor(Pos.x / ChunkSize), (int)math.floor(Pos.z / ChunkSize));
     }
 }

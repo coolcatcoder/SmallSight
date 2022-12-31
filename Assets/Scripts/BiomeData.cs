@@ -15,10 +15,13 @@ public struct BiomeData : IComponentData
     public bool TeleportSafe;
 }
 
+//[System.Serializable]
 public struct EFeature
 {
     public Entity FeaturePrefab;
     public float PercentChanceToSpawn;
     public int Danger;
     public bool IsTerrain;
+    public float MinNoiseValue;
+    public float MaxNoiseValue;
 }

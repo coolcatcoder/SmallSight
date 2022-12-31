@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxChunks: 100000
-  MaxSeed: 100000
+  MaxSeed: 10000
   MinBiomeSeed:
     x: -100000
     y: -100000
@@ -162,8 +162,8 @@ MonoBehaviour:
     x: 100000
     y: 100000
     z: 100000
-  BiomeNoiseScale: 0
-  TerrainNoiseScale: 0
+  BiomeNoiseScale: 0.1
+  TerrainNoiseScale: 0.1
   MaxTeleportBounds:
     x: -100000
     y: 0
@@ -172,6 +172,7 @@ MonoBehaviour:
     x: 100000
     y: 0
     z: 100000
+  ChunkSize: 10
 --- !u!4 &736213429
 Transform:
   m_ObjectHideFlags: 0
@@ -223,10 +224,19 @@ MonoBehaviour:
     PercentChanceToSpawn: 100
     Danger: 0
     IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
+      type: 3}
+    PercentChanceToSpawn: 0
+    Danger: 0
+    IsTerrain: 1
+    MinNoiseValue: 0
+    MaxNoiseValue: 1
   MinNoiseValues:
-    x: 0
-    y: 0
-    z: 0
+    x: -1
+    y: -1
+    z: -1
   MaxNoiseValues:
     x: 1
     y: 1

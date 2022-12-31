@@ -26,9 +26,9 @@ public struct ChunkMaster : IComponentData
 
     public Unity.Mathematics.Random RandStruct;
 
-    public NativeList<int2> ChunksToGenerate;
-    public NativeList<int2> ChunksToUnload;
-    public NativeList<int2> ChunksToLoad;
+    //public NativeList<int2> ChunksToGenerate;
+    //public NativeList<int2> ChunksToUnload;
+    //public NativeList<int2> ChunksToLoad;
 
     public int ChunkSize;
 }
