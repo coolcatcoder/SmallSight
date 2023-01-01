@@ -123,6 +123,85 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &225870192
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 225870194}
+  - component: {fileID: 225870193}
+  m_Layer: 0
+  m_Name: Mixed Jungle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &225870193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 225870192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 095f2c71cb842b241a07107eb84dbe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Mixed Jungle
+  Features:
+  - FeaturePrefab: {fileID: 866482175634483713, guid: 135a1ea4708e4114fa634469dcb8638c,
+      type: 3}
+    PercentChanceToSpawn: 10
+    Danger: 0
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 866482175634483713, guid: d3ef39994069ed74395d322456690556,
+      type: 3}
+    PercentChanceToSpawn: 10
+    Danger: 0
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
+      type: 3}
+    PercentChanceToSpawn: 0
+    Danger: 200
+    IsTerrain: 1
+    MinNoiseValue: 0
+    MaxNoiseValue: 1
+  MinNoiseValues:
+    x: -1
+    y: -1
+    z: -1
+  MaxNoiseValues:
+    x: 0.5
+    y: 0.5
+    z: 0.5
+  ExtraTerrainNoiseScale: 0
+  TeleportSafe: 1
+  ColourSpawn: {r: 0.9137255, g: 0.20784311, b: 0.619236, a: 0}
+  MaxDistance: 90
+--- !u!4 &225870194
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 225870192}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &736213427
 GameObject:
   m_ObjectHideFlags: 0
@@ -162,7 +241,7 @@ MonoBehaviour:
     x: 100000
     y: 100000
     z: 100000
-  BiomeNoiseScale: 0.1
+  BiomeNoiseScale: 0.03
   TerrainNoiseScale: 0.1
   MaxTeleportBounds:
     x: -100000
@@ -172,7 +251,7 @@ MonoBehaviour:
     x: 100000
     y: 0
     z: 100000
-  ChunkSize: 10
+  ChunkSize: 50
 --- !u!4 &736213429
 Transform:
   m_ObjectHideFlags: 0
@@ -229,7 +308,7 @@ MonoBehaviour:
   - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
       type: 3}
     PercentChanceToSpawn: 0
-    Danger: 0
+    Danger: 200
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 1
@@ -238,11 +317,13 @@ MonoBehaviour:
     y: -1
     z: -1
   MaxNoiseValues:
-    x: 1
-    y: 1
-    z: 1
+    x: 0.5
+    y: 0.5
+    z: 0.5
   ExtraTerrainNoiseScale: 0
   TeleportSafe: 1
+  ColourSpawn: {r: 0.206, g: 0.23243941, b: 0.9150943, a: 0}
+  MaxDistance: 90
 --- !u!4 &901327660
 Transform:
   m_ObjectHideFlags: 0
@@ -250,6 +331,156 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 901327658}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1739204785
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1739204787}
+  - component: {fileID: 1739204786}
+  m_Layer: 0
+  m_Name: harm grove
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1739204786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739204785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 095f2c71cb842b241a07107eb84dbe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Harm Grove
+  Features:
+  - FeaturePrefab: {fileID: 866482175634483713, guid: d3ef39994069ed74395d322456690556,
+      type: 3}
+    PercentChanceToSpawn: 70
+    Danger: 0
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
+      type: 3}
+    PercentChanceToSpawn: 0
+    Danger: 200
+    IsTerrain: 1
+    MinNoiseValue: 0
+    MaxNoiseValue: 1
+  MinNoiseValues:
+    x: -1
+    y: -1
+    z: -1
+  MaxNoiseValues:
+    x: 0.5
+    y: 0.5
+    z: 0.5
+  ExtraTerrainNoiseScale: 0
+  TeleportSafe: 1
+  ColourSpawn: {r: 0.17047487, g: 0.8113208, b: 0.08802067, a: 0}
+  MaxDistance: 70
+--- !u!4 &1739204787
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739204785}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1780829028
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1780829031}
+  - component: {fileID: 1780829030}
+  - component: {fileID: 1780829029}
+  m_Layer: 0
+  m_Name: Default Biome Test
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1780829029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1780829028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af0b9001d9d5a084183bee557c34664d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1780829030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1780829028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 095f2c71cb842b241a07107eb84dbe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Sparse
+  Features:
+  - FeaturePrefab: {fileID: 866482175634483713, guid: f7ad1903bb42e1a428c355b19c7ff5bf,
+      type: 3}
+    PercentChanceToSpawn: 25
+    Danger: 0
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  MinNoiseValues:
+    x: 5
+    y: 5
+    z: 5
+  MaxNoiseValues:
+    x: 10
+    y: 10
+    z: 10
+  ExtraTerrainNoiseScale: 0.2
+  TeleportSafe: 1
+  ColourSpawn: {r: 0, g: 0, b: 0, a: 0}
+  MaxDistance: 0
+--- !u!4 &1780829031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1780829028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -272,7 +503,7 @@ GameObject:
   - component: {fileID: 2015128424}
   - component: {fileID: 2015128425}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: PlayerCube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -370,6 +601,8 @@ MonoBehaviour:
   MinCameraZoom: 0
   MaxCameraZoom: 0
   DebugChunkColour: {r: 0.117403835, g: 0.09416164, b: 0.8679245, a: 1}
+  DebugDrag: 1
+  MaxDanger: 150
 --- !u!114 &2015128425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -382,7 +615,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22e2c5b193b0dd74e9fb42922e685157, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Zoom: 3
+  Zoom: 15
   Pos:
     x: 0
     y: 5

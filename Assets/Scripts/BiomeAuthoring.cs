@@ -13,6 +13,9 @@ public class BiomeAuthoring : MonoBehaviour
     public float3 MaxNoiseValues;
     public float ExtraTerrainNoiseScale;
     public bool TeleportSafe;
+
+    public Color ColourSpawn;
+    public float MaxDistance;
 }
 
 public class BiomeBaker : Baker<BiomeAuthoring>
@@ -21,11 +24,23 @@ public class BiomeBaker : Baker<BiomeAuthoring>
     {
         if (authoring.Features != null)
         {
-            NativeArray<EFeature> ConvertedFeatures = new NativeArray<EFeature>(authoring.Features.Length, Allocator.Persistent);
+            AddComponent(new BiomeData
+            {
+                BiomeName = new NativeText(authoring.BiomeName, Allocator.Persistent),
+                //Features = ConvertedFeatures,
+                MinNoiseValues = authoring.MinNoiseValues,
+                MaxNoiseValues = authoring.MaxNoiseValues,
+                ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
+                TeleportSafe = authoring.TeleportSafe,
 
+                ColourSpawn = authoring.ColourSpawn,
+                MaxDistance = authoring.MaxDistance
+            });
+
+            var FeatureBuffer = AddBuffer<BiomeFeature>();
             for (int i = 0; i < authoring.Features.Length; i++)
             {
-                ConvertedFeatures[i] = new EFeature
+                FeatureBuffer.Add(new BiomeFeature
                 {
                     FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab),
                     PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
@@ -33,18 +48,9 @@ public class BiomeBaker : Baker<BiomeAuthoring>
                     IsTerrain = authoring.Features[i].IsTerrain,
                     MinNoiseValue = authoring.Features[i].MinNoiseValue,
                     MaxNoiseValue = authoring.Features[i].MaxNoiseValue
-                };
+                });
             }
 
-            AddComponent(new BiomeData
-            {
-                BiomeName = new NativeText(authoring.BiomeName, Allocator.Persistent),
-                Features = ConvertedFeatures, //does this neeed to be disposed?
-                MinNoiseValues = authoring.MinNoiseValues,
-                MaxNoiseValues = authoring.MaxNoiseValues,
-                ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
-                TeleportSafe = authoring.TeleportSafe
-            });
         }
         else
         {
@@ -52,6 +58,40 @@ public class BiomeBaker : Baker<BiomeAuthoring>
         }
     }
 }
+
+public struct BiomeData : IComponentData
+{
+    public NativeText BiomeName;
+    public float3 MinNoiseValues;
+    public float3 MaxNoiseValues;
+    public float ExtraTerrainNoiseScale;
+    public bool TeleportSafe;
+
+    public Color ColourSpawn;
+    public float MaxDistance;
+}
+
+[InternalBufferCapacity(0)]
+public struct BiomeFeature : IBufferElementData
+{
+    public Entity FeaturePrefab;
+    public float PercentChanceToSpawn;
+    public int Danger;
+    public bool IsTerrain;
+    public float MinNoiseValue;
+    public float MaxNoiseValue;
+}
+
+//[System.Serializable]
+//public struct EFeature
+//{
+//    public Entity FeaturePrefab;
+//    public float PercentChanceToSpawn;
+//    public int Danger;
+//    public bool IsTerrain;
+//    public float MinNoiseValue;
+//    public float MaxNoiseValue;
+//}
 
 [System.Serializable]
 public struct GFeature

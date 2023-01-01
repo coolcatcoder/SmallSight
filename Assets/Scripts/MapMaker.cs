@@ -45,33 +45,30 @@ public partial struct MapMaker : ISystem, ISystemStartStop
         MapInfo.BiomeSeed = MapInfo.RandStruct.NextFloat3(MapInfo.MinBiomeSeed, MapInfo.MaxBiomeSeed);
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ref ChunkMaster MapInfo = ref SystemAPI.GetSingletonRW<ChunkMaster>().ValueRW;
-        DynamicBuffer<ChunkGenerationQueueData> GenerationQueueInfo = SystemAPI.GetSingletonBuffer<ChunkGenerationQueueData>();
-        DynamicBuffer<ChunkUnloadingQueueData> UnloadingQueueInfo = SystemAPI.GetSingletonBuffer<ChunkUnloadingQueueData>();
-        DynamicBuffer<ChunkLoadingQueueData> LoadingQueueInfo = SystemAPI.GetSingletonBuffer<ChunkLoadingQueueData>();
 
         //code here
-        for (int i = 0; i < GenerationQueueInfo.Length; i++)
+        for (int i = 0; i < MapInfo.ChunksToGenerate.Length; i++)
         {
-            GenerateChunk(GenerationQueueInfo[i].ChunkToGenerate, ref MapInfo, ref state);
+            GenerateChunk(MapInfo.ChunksToGenerate[i], ref MapInfo, ref state);
         }
 
-        for (int i = 0; i < UnloadingQueueInfo.Length; i++)
+        for (int i = 0; i < MapInfo.ChunksToUnload.Length; i++)
         {
-            UnloadChunk(UnloadingQueueInfo[i].ChunkToUnload, ref MapInfo, ref state);
+            UnloadChunk(MapInfo.ChunksToUnload[i], ref MapInfo, ref state);
         }
 
-        for (int i = 0; i < LoadingQueueInfo.Length; i++)
+        for (int i = 0; i < MapInfo.ChunksToLoad.Length; i++)
         {
-            LoadChunk(LoadingQueueInfo[i].ChunkToLoad, ref MapInfo, ref state);
+            LoadChunk(MapInfo.ChunksToLoad[i], ref MapInfo, ref state);
         }
 
-        GenerationQueueInfo.Clear();
-        UnloadingQueueInfo.Clear();
-        LoadingQueueInfo.Clear();
+        MapInfo.ChunksToGenerate.Clear();
+        MapInfo.ChunksToUnload.Clear();
+        MapInfo.ChunksToLoad.Clear();
     }
 
     [BurstCompile]
@@ -86,7 +83,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
 
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     public void GenerateChunk(int2 Chunk, ref ChunkMaster MapInfo, ref SystemState state)
     {
         if (MapInfo.Chunks.ContainsKey(Chunk))
@@ -94,6 +91,8 @@ public partial struct MapMaker : ISystem, ISystemStartStop
             return;
         }
         Entity ChunkEntity = state.EntityManager.CreateEntity();
+        state.EntityManager.AddBuffer<EntityHerd>(ChunkEntity);
+
         //state.EntityManager.SetName(ChunkEntity, "Chunk(" + Chunk.x + "," + Chunk.y + ")"); Not burst compatible...
         MapInfo.Chunks.Add(Chunk, ChunkEntity);
 
@@ -106,45 +105,53 @@ public partial struct MapMaker : ISystem, ISystemStartStop
             for (int z = 0; z < MapInfo.ChunkSize; z++)
             {
                 int3 WorldPos = new int3(x + ChunkMinCorner.x, -1, z + ChunkMinCorner.z);
-                BiomeData Biome = CalculateBiome(WorldPos, ref MapInfo, ref state);
+                Entity BiomeEntity = CalculateBiomeEntity(WorldPos, ref MapInfo, ref state);
+                BiomeData Biome = state.EntityManager.GetComponentData<BiomeData>(BiomeEntity);
+                DynamicBuffer<BiomeFeature> BiomeFeatures = state.EntityManager.GetBuffer<BiomeFeature>(BiomeEntity);
 
                 var CurrentSeededPos = new float3(WorldPos.x + MapInfo.Seed, WorldPos.y, WorldPos.z);
                 float CurrentNoiseValue = noise.snoise(CurrentSeededPos.xz * (MapInfo.TerrainNoiseScale + Biome.ExtraTerrainNoiseScale));
 
                 bool ContainsTerrain = false;
 
-                for (int i = 0; i < Biome.Features.Length; i++)
+                for (int i = 0; i < BiomeFeatures.Length; i++)
                 {
-                    if (Biome.Features[i].IsTerrain && ((CurrentNoiseValue >= Biome.Features[i].MinNoiseValue) && (CurrentNoiseValue < Biome.Features[i].MaxNoiseValue)))
+                    BiomeFeatures = state.EntityManager.GetBuffer<BiomeFeature>(BiomeEntity);
+                    if (BiomeFeatures[i].IsTerrain && ((CurrentNoiseValue >= BiomeFeatures[i].MinNoiseValue) && (CurrentNoiseValue < BiomeFeatures[i].MaxNoiseValue)))
                     {
+                        int Danger = BiomeFeatures[i].Danger;
                         ContainsTerrain = true;
-                        Entity BlockEntity = state.EntityManager.Instantiate(Biome.Features[i].FeaturePrefab);
+                        Entity BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
                         SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = WorldPos;
 
-                        state.EntityManager.AddComponent<Parent>(BlockEntity);
-                        state.EntityManager.SetComponentData<Parent>(BlockEntity, new Parent
+                        SystemAPI.GetBuffer<EntityHerd>(ChunkEntity).Add(new EntityHerd
                         {
-                            Value = ChunkEntity
+                            Block = BlockEntity,
+                            Danger = Danger
                         });
-
                     }
+                    BiomeFeatures = state.EntityManager.GetBuffer<BiomeFeature>(BiomeEntity);
                 }
 
-                if (!ContainsTerrain)
+                if (!ContainsTerrain) // create plants and stuff now!
                 {
-                    for (int i = 0; i < Biome.Features.Length; i++)
+                    BiomeFeatures = state.EntityManager.GetBuffer<BiomeFeature>(BiomeEntity);
+                    for (int i = 0; i < BiomeFeatures.Length; i++)
                     {
-                        if ((!Biome.Features[i].IsTerrain) && (MapInfo.RandStruct.NextFloat() < Biome.Features[i].PercentChanceToSpawn / 100))
+                        BiomeFeatures = state.EntityManager.GetBuffer<BiomeFeature>(BiomeEntity);
+                        if ((!BiomeFeatures[i].IsTerrain) && (MapInfo.RandStruct.NextFloat() < BiomeFeatures[i].PercentChanceToSpawn / 100))
                         {
-                            Entity BlockEntity = state.EntityManager.Instantiate(Biome.Features[i].FeaturePrefab);
+                            int Danger = BiomeFeatures[i].Danger;
+                            Entity BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
                             SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = WorldPos;
 
-                            state.EntityManager.AddComponent<Parent>(BlockEntity);
-                            state.EntityManager.SetComponentData<Parent>(BlockEntity, new Parent
+                            SystemAPI.GetBuffer<EntityHerd>(ChunkEntity).Add(new EntityHerd
                             {
-                                Value = ChunkEntity
+                                Block = BlockEntity,
+                                Danger = Danger
                             });
                         }
+                        BiomeFeatures = state.EntityManager.GetBuffer<BiomeFeature>(BiomeEntity);
                     }
                 }
             }
@@ -152,7 +159,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public void UnloadChunk(int2 Chunk, ref ChunkMaster MapInfo, ref SystemState state)
+    public void UnloadChunk(int2 Chunk, ref ChunkMaster MapInfo, ref SystemState state) //fix asap
     {
         if (MapInfo.Chunks.TryGetValue(Chunk, out Entity ChunkEntity))
         {
@@ -164,7 +171,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public void LoadChunk(int2 Chunk, ref ChunkMaster MapInfo, ref SystemState state)
+    public void LoadChunk(int2 Chunk, ref ChunkMaster MapInfo, ref SystemState state) //fix asap
     {
         if (MapInfo.Chunks.TryGetValue(Chunk, out Entity ChunkEntity))
         {
@@ -176,7 +183,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public BiomeData CalculateBiome(float3 Pos, ref ChunkMaster MapInfo, ref SystemState state)
+    public Entity CalculateBiomeEntity(float3 Pos, ref ChunkMaster MapInfo, ref SystemState state)
     {
         // Biomes are calculated based on 3 channels of perlin noise (can be treated as rgb should you want to visulize it)
 
@@ -191,7 +198,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
 
         float3 CurrentBiomeNoise = new float3(noise.snoise(SeededPos1.xz * MapInfo.BiomeNoiseScale), noise.snoise(SeededPos2.xz * MapInfo.BiomeNoiseScale), noise.snoise(SeededPos3.xz * MapInfo.BiomeNoiseScale));
 
-        BiomeJob CurrentBiomeJob = new BiomeJob
+        BiomeJob2 CurrentBiomeJob = new BiomeJob2
         {
             BiomeNoise = CurrentBiomeNoise,
             CurrentBiomeEntity = new NativeReference<Entity>(Allocator.TempJob)
@@ -204,9 +211,14 @@ public partial struct MapMaker : ISystem, ISystemStartStop
         var CurrentBiomeEntity = CurrentBiomeJob.CurrentBiomeEntity.Value;
         CurrentBiomeJob.CurrentBiomeEntity.Dispose();
 
-        var CurrentBiome = state.EntityManager.GetComponentData<BiomeData>(CurrentBiomeEntity);
+        //var CurrentBiome = state.EntityManager.GetComponentData<BiomeData>(CurrentBiomeEntity);
 
-        return CurrentBiome;
+        if (CurrentBiomeEntity == Entity.Null)
+        {
+            CurrentBiomeEntity = SystemAPI.GetSingletonEntity<DefaultBiomeData>();
+        }
+
+        return CurrentBiomeEntity;
     }
 
     //    [BurstCompile]
@@ -282,18 +294,39 @@ public partial struct MapMaker : ISystem, ISystemStartStop
 }
 
 [BurstCompile]
-public partial struct BiomeJob : IJobEntity
+public partial struct BiomeJob1 : IJobEntity
 {
     public float3 BiomeNoise;
     public NativeReference<Entity> CurrentBiomeEntity;
 
     [BurstCompile]
-    void Execute(ref BiomeData Biome, Entity BiomeEntity)
+    void Execute(ref BiomeData Biome, ref DynamicBuffer<BiomeFeature> Features, Entity BiomeEntity)
     {
         if (math.all(BiomeNoise >= Biome.MinNoiseValues) && math.all(BiomeNoise < Biome.MaxNoiseValues))
         {
             CurrentBiomeEntity.Value = BiomeEntity;
             //break; Removed?
+        }
+    }
+}
+
+[BurstCompile]
+public partial struct BiomeJob2 : IJobEntity
+{
+    public float3 BiomeNoise;
+    public NativeReference<Entity> CurrentBiomeEntity;
+
+    [BurstCompile]
+    void Execute(ref BiomeData Biome, ref DynamicBuffer<BiomeFeature> Features, Entity BiomeEntity)
+    {
+        //if (math.all(BiomeNoise >= Biome.MinNoiseValues) && math.all(BiomeNoise < Biome.MaxNoiseValues))
+        //{
+        //    CurrentBiomeEntity.Value = BiomeEntity;
+        //    //break; Removed?
+        //}
+        if (math.distance(new float3(Biome.ColourSpawn.r * 2 - 1, Biome.ColourSpawn.g * 2 - 1, Biome.ColourSpawn.b * 2 - 1), BiomeNoise) <= Biome.MaxDistance/100)
+        {
+            CurrentBiomeEntity.Value = BiomeEntity;
         }
     }
 }

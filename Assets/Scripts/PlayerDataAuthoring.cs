@@ -22,6 +22,10 @@ public class PlayerDataAuthoring : MonoBehaviour
     //public Camera PlayerCamera;
 
     public Color DebugChunkColour;
+
+    public bool DebugDrag;
+
+    public int MaxDanger;
 }
 
 class PlayerDataBaker : Baker<PlayerDataAuthoring>
@@ -36,7 +40,9 @@ class PlayerDataBaker : Baker<PlayerDataAuthoring>
             MinNoiseNotWalkable = authoring.MinNoiseNotWalkable,
             MinCameraZoom = authoring.MinCameraZoom,
             MaxCameraZoom = authoring.MaxCameraZoom,
-            DebugChunkColour = authoring.DebugChunkColour
+            DebugChunkColour = authoring.DebugChunkColour,
+            DebugDrag = authoring.DebugDrag,
+            MaxDanger = authoring.MaxDanger
         });
     }
 }

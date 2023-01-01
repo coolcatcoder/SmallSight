@@ -21,4 +21,8 @@ public struct PlayerData : IComponentData
     //public Camera PlayerCamera;
 
     public Color DebugChunkColour;
+
+    public bool DebugDrag;
+
+    public int MaxDanger;
 }
