@@ -11,9 +11,13 @@ using Unity.Burst;
 
 public partial class Player : SystemBase
 {
+    protected override void OnCreate()
+    {
+        //RequireForUpdate<FinishedGenerating>();
+    }
     protected override void OnStartRunning()
     {
-        //MapSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<MapMaker>();
+
     }
 
     protected override void OnUpdate()
@@ -90,14 +94,26 @@ public partial class Player : SystemBase
         var NewCamPos = NewPos;
         NewCamPos.y = 5;
 
-        SystemAPI.GetComponentLookup<CameraData>().GetRefRW(PlayerEntity, false).ValueRW.Pos = (int3)NewCamPos;
+        ref CameraData Cam = ref SystemAPI.GetComponentLookup<CameraData>().GetRefRW(PlayerEntity, false).ValueRW;
+        Cam.Pos = (int3)NewCamPos;
 
         MapInfo.ChunksToGenerate.Add(GetChunkNum(NewPos, MapInfo.ChunkSize));
         Debug.Log(GetChunkNum(NewPos, MapInfo.ChunkSize));
 
         SystemAPI.GetSingletonRW<PlayerData>().ValueRW.DebugChunkColour = CalculateBiomeColour(NewPos, ref MapInfo);
 
-        DevourBlocks((int3)NewPos, ref MapInfo);
+        ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+        PlayerInfo.VisibleStats.y -= 1;
+        DevourBlocks((int3)NewPos, ref MapInfo, ref PlayerInfo);
+
+        if (PlayerInfo.VisibleStats.y < 0)
+        {
+            PlayerInfo.VisibleStats.x -= 1;
+        }
+
+        PlayerInfo.MaxDanger = (int)(PlayerInfo.VisibleStats.w * 100);
+
+        Cam.Zoom = math.clamp(PlayerInfo.HiddenStats.x, PlayerInfo.MinCameraZoom, PlayerInfo.MaxCameraZoom);
     }
 
     [BurstCompile]
@@ -159,7 +175,7 @@ public partial class Player : SystemBase
     }
 
     [BurstCompile]
-    public void DevourBlocks(int3 Pos, ref ChunkMaster MapInfo)
+    public void DevourBlocks(int3 Pos, ref ChunkMaster MapInfo, ref PlayerData Stats)
     {
         if (!MapInfo.Chunks.TryGetValue(GetChunkNum(Pos, MapInfo.ChunkSize), out Entity ChunkEntity))
         {
@@ -181,6 +197,11 @@ public partial class Player : SystemBase
             {
                 StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);
                 Entity EntityToRemove = StuffInChunk[i].Block;
+                BlockBehaviourData Block = SystemAPI.GetComponent<BlockBehaviourData>(EntityToRemove);
+
+                Stats.VisibleStats += Block.VisibleStats;
+                Stats.HiddenStats += Block.HiddenStats;
+
                 World.EntityManager.DestroyEntity(EntityToRemove);
                 StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);
                 StuffInChunk.RemoveAt(i);

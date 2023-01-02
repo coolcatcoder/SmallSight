@@ -97,8 +97,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   VisibleStats:
-    x: 0
-    y: 0
+    x: -200
+    y: -200
     z: 0
     w: 0
   HiddenStats:

@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   VisibleStats:
-    x: 0
+    x: -5
     y: -5
     z: 0
     w: 0

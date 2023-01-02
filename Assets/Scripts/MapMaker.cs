@@ -43,6 +43,65 @@ public partial struct MapMaker : ISystem, ISystemStartStop
         MapInfo.RandStruct = Unity.Mathematics.Random.CreateFromIndex(MapInfo.Seed);
 
         MapInfo.BiomeSeed = MapInfo.RandStruct.NextFloat3(MapInfo.MinBiomeSeed, MapInfo.MaxBiomeSeed);
+
+        state.EntityManager.AddComponent<FinishedGenerating>(SystemAPI.GetSingletonEntity<ChunkMaster>());
+
+        FindSafePlayerSpawn(ref state);
+    }
+
+    public void FindSafePlayerSpawn(ref SystemState state)
+    {
+        ref var PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+        Entity PlayerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
+        ref var MapInfo = ref SystemAPI.GetSingletonRW<ChunkMaster>().ValueRW;
+        ref LocalTransform PlayerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(PlayerEntity, false).ValueRW;
+        ref CameraData Cam = ref SystemAPI.GetSingletonRW<CameraData>().ValueRW;
+
+        GenerateChunk(GetChunkNum(PlayerTransform.Position, MapInfo.ChunkSize), ref MapInfo, ref state);
+
+        while (!IsSafe((int3)PlayerTransform.Position, -1, ref MapInfo, ref state))
+        {
+            PlayerTransform.Position = MapInfo.RandStruct.NextInt3(MapInfo.MinTeleportBounds, MapInfo.MaxTeleportBounds);
+            PlayerTransform.Position.y = 0;
+            Cam.Pos = (int3)PlayerTransform.Position;
+            Cam.Pos.y = 5;
+            GenerateChunk(GetChunkNum(PlayerTransform.Position, MapInfo.ChunkSize), ref MapInfo, ref state);
+        }
+    }
+
+    //yoinked from player
+    public bool IsSafe(int3 Pos, int MaxDangerLevel, ref ChunkMaster MapInfo, ref SystemState state)
+    {
+        if (!MapInfo.Chunks.TryGetValue(GetChunkNum(Pos, MapInfo.ChunkSize), out Entity ChunkEntity))
+        {
+            Debug.Log("chunk isnt real?");
+            return true;
+        }
+
+        if (ChunkEntity == Entity.Null)
+        {
+            Debug.Log("Couldn't get chunk entity, assuming safe!");
+            return true;
+        }
+
+        DynamicBuffer<EntityHerd> StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);
+
+        for (int i = 0; i < StuffInChunk.Length; i++)
+        {
+            if (StuffInChunk[i].Danger > MaxDangerLevel && math.all(Pos.xz == (int2)SystemAPI.GetComponent<LocalTransform>(StuffInChunk[i].Block).Position.xz))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    [BurstCompile] //yoinked from player
+    public int2 GetChunkNum(float3 Pos, float ChunkSize)
+    {
+        //return new int2(Mathf.FloorToInt(Pos.x / ChunkSize), Mathf.FloorToInt(Pos.z / ChunkSize));
+        return new int2((int)math.floor(Pos.x / ChunkSize), (int)math.floor(Pos.z / ChunkSize));
     }
 
     [BurstCompile]
