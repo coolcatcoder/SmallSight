@@ -432,6 +432,78 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &799867287
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 799867289}
+  - component: {fileID: 799867288}
+  m_Layer: 0
+  m_Name: Thickets
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &799867288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 799867287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 095f2c71cb842b241a07107eb84dbe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Thickets
+  Features:
+  - FeaturePrefab: {fileID: 866482175634483713, guid: ce9a844d098a12340b21749585bd63dc,
+      type: 3}
+    PercentChanceToSpawn: 70
+    Danger: 0
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
+      type: 3}
+    PercentChanceToSpawn: 0
+    Danger: 100
+    IsTerrain: 1
+    MinNoiseValue: 0
+    MaxNoiseValue: 1
+  MinNoiseValues:
+    x: -1
+    y: -1
+    z: -1
+  MaxNoiseValues:
+    x: 0.5
+    y: 0.5
+    z: 0.5
+  ExtraTerrainNoiseScale: 1
+  TeleportSafe: 1
+  ColourSpawn: {r: 0.8541311, g: 0.54559326, b: 0.49164614, a: 1}
+  MaxDistance: 50
+--- !u!4 &799867289
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 799867287}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 8
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1602326173
 GameObject:
   m_ObjectHideFlags: 0

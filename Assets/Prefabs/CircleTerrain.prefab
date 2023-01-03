@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 204732662716743343}
   - component: {fileID: -4707324029886854817}
   m_Layer: 0
-  m_Name: Test Terrain
+  m_Name: CircleTerrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b6a8574969c2c8e4ca7cf4b62f13f99a, type: 2}
+  - {fileID: 2100000, guid: 3bc601541e90cf547ade698dbd36d91a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
