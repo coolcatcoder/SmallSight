@@ -42,6 +42,13 @@ public partial class Player : SystemBase
             return;
         }
 
+        ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+
+        if (PlayerInfo.VisibleStats.x <= 0)
+        {
+            return;
+        }
+
         EntityQuery PlayerQuery = new EntityQueryBuilder(Allocator.Temp)
             .WithAllRW<PlayerData>()
             .WithAllRW<LocalTransform>()
@@ -102,7 +109,6 @@ public partial class Player : SystemBase
 
         SystemAPI.GetSingletonRW<PlayerData>().ValueRW.DebugChunkColour = CalculateBiomeColour(NewPos, ref MapInfo);
 
-        ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         PlayerInfo.VisibleStats.y -= 1;
         DevourBlocks((int3)NewPos, ref MapInfo, ref PlayerInfo);
 
@@ -114,6 +120,11 @@ public partial class Player : SystemBase
         PlayerInfo.MaxDanger = (int)(PlayerInfo.VisibleStats.w * 100);
 
         Cam.Zoom = math.clamp(PlayerInfo.HiddenStats.x, PlayerInfo.MinCameraZoom, PlayerInfo.MaxCameraZoom);
+
+        if (PlayerInfo.VisibleStats.x <= 0)
+        {
+            PlayerInfo.UIState = 1;
+        }
     }
 
     [BurstCompile]

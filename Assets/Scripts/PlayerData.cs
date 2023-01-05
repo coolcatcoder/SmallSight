@@ -25,4 +25,13 @@ public struct PlayerData : IComponentData
     public bool DebugDrag;
 
     public int MaxDanger;
+
+    public int UIState;
 }
+
+/*
+ * UI States:
+ * 0 : alive, in game
+ * 1 : dead, but has not continued
+ * 2 : perk and curse screen
+ */
