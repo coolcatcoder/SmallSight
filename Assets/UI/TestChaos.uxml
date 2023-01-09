@@ -1,11 +1,23 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-        <ui:VisualElement name="stats" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-            <ui:Label tabindex="-1" text="Testing?" display-tooltip-when-elided="true" />
+        <ui:VisualElement name="stats" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); right: auto; left: 10%; top: 20%;">
+            <ui:Label tabindex="-1" text="Testing?" display-tooltip-when-elided="true" style="font-size: 50%; color: rgb(255, 255, 255);" />
         </ui:VisualElement>
-        <ui:VisualElement name="PerksAndCurses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 75%; height: 90%; left: 12.5%; bottom: 3%; align-items: center;">
-            <ui:VisualElement name="Perks" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 30%; height: 90%;" />
-            <ui:VisualElement name="Curses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 30%; height: 90%;" />
+        <ui:VisualElement name="PerksAndCurses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 75%; height: 90%; left: 12.5%; bottom: 3%; align-items: center; flex-direction: row;">
+            <ui:VisualElement name="Perks" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; height: auto;">
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Curses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; height: auto;">
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
