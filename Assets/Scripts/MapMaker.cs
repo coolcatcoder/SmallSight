@@ -12,24 +12,10 @@ using Unity.Jobs;
 [BurstCompile]
 public partial struct MapMaker : ISystem, ISystemStartStop
 {
-    //public static Entity ChunkHolder;
-    //public static int ChunkSize;
-    //public int QueueSize;
-
-    //public static NativeList<int2> ChunksToGenerate;
-    //public static NativeList<int2> ChunksToUnload;
-    //public static NativeList<int2> ChunksToLoad;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        //ChunkSize = 10;
-        //QueueSize = 100;
-
-        //ChunksToGenerate = new NativeList<int2>(QueueSize, Allocator.Persistent);
-        //ChunksToUnload = new NativeList<int2>(QueueSize, Allocator.Persistent);
-        //ChunksToLoad = new NativeList<int2>(QueueSize, Allocator.Persistent);
-
         state.RequireForUpdate<ChunkMaster>();
     }
 
@@ -38,11 +24,13 @@ public partial struct MapMaker : ISystem, ISystemStartStop
     {
         ref ChunkMaster MapInfo = ref SystemAPI.GetSingletonRW<ChunkMaster>().ValueRW;
 
-        MapInfo.Seed = (uint)UnityEngine.Random.Range(0, MapInfo.MaxSeed);
+        //MapInfo.Seed = (uint)UnityEngine.Random.Range(0, MapInfo.MaxSeed);
 
-        MapInfo.RandStruct = Unity.Mathematics.Random.CreateFromIndex(MapInfo.Seed);
+        //MapInfo.RandStruct = Unity.Mathematics.Random.CreateFromIndex(MapInfo.Seed);
 
-        MapInfo.BiomeSeed = MapInfo.RandStruct.NextFloat3(MapInfo.MinBiomeSeed, MapInfo.MaxBiomeSeed);
+        //MapInfo.BiomeSeed = MapInfo.RandStruct.NextFloat3(MapInfo.MinBiomeSeed, MapInfo.MaxBiomeSeed);
+
+        MapInfo.RandomiseSeeds();
 
         state.EntityManager.AddComponent<FinishedGenerating>(SystemAPI.GetSingletonEntity<ChunkMaster>());
 
@@ -151,6 +139,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
         }
         Entity ChunkEntity = state.EntityManager.CreateEntity();
         state.EntityManager.AddBuffer<EntityHerd>(ChunkEntity);
+        state.EntityManager.AddComponent<DestroyDuringReset>(ChunkEntity);
 
         //state.EntityManager.SetName(ChunkEntity, "Chunk(" + Chunk.x + "," + Chunk.y + ")"); Not burst compatible...
         MapInfo.Chunks.Add(Chunk, ChunkEntity);
@@ -182,6 +171,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
                         ContainsTerrain = true;
                         Entity BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
                         SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = WorldPos;
+                        state.EntityManager.AddComponent<DestroyDuringReset>(BlockEntity);
 
                         SystemAPI.GetBuffer<EntityHerd>(ChunkEntity).Add(new EntityHerd
                         {
@@ -203,6 +193,7 @@ public partial struct MapMaker : ISystem, ISystemStartStop
                             int Danger = BiomeFeatures[i].Danger;
                             Entity BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
                             SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = WorldPos;
+                            state.EntityManager.AddComponent<DestroyDuringReset>(BlockEntity);
 
                             SystemAPI.GetBuffer<EntityHerd>(ChunkEntity).Add(new EntityHerd
                             {
@@ -388,4 +379,9 @@ public partial struct BiomeJob2 : IJobEntity
             CurrentBiomeEntity.Value = BiomeEntity;
         }
     }
+}
+
+public struct DestroyDuringReset : IComponentData
+{
+
 }

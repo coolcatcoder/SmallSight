@@ -9,7 +9,7 @@ public class PlayerInputThrower : MonoBehaviour
 {
     public void Move(InputAction.CallbackContext context)
     {
-        World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<Player>().Move(context);
+        //World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<Player>().Move(context);
     }
 
     public void Restart(InputAction.CallbackContext context)

@@ -17,7 +17,7 @@ public partial class Player : SystemBase
     }
     protected override void OnStartRunning()
     {
-
+        UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[0].AddListener(Move);
     }
 
     protected override void OnUpdate()
@@ -29,7 +29,7 @@ public partial class Player : SystemBase
 
         if (PlayerInfo.DebugDrag)
         {
-            MapInfo.ChunksToGenerate.Add(GetChunkNum(PlayerTransform.Position, MapInfo.ChunkSize));
+            MapInfo.ChunksToGenerate.Add(MapInfo.GetChunkNum(PlayerTransform.Position));
 
             PlayerInfo.DebugChunkColour = CalculateBiomeColour(PlayerTransform.Position, ref MapInfo);
         }
@@ -104,8 +104,8 @@ public partial class Player : SystemBase
         ref CameraData Cam = ref SystemAPI.GetComponentLookup<CameraData>().GetRefRW(PlayerEntity, false).ValueRW;
         Cam.Pos = (int3)NewCamPos;
 
-        MapInfo.ChunksToGenerate.Add(GetChunkNum(NewPos, MapInfo.ChunkSize));
-        Debug.Log(GetChunkNum(NewPos, MapInfo.ChunkSize));
+        MapInfo.ChunksToGenerate.Add(MapInfo.GetChunkNum(NewPos));
+        //Debug.Log(GetChunkNum(NewPos, MapInfo.ChunkSize));
 
         SystemAPI.GetSingletonRW<PlayerData>().ValueRW.DebugChunkColour = CalculateBiomeColour(NewPos, ref MapInfo);
 
@@ -123,16 +123,18 @@ public partial class Player : SystemBase
 
         if (PlayerInfo.VisibleStats.x <= 0)
         {
-            PlayerInfo.UIState = 1;
+            ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+            UIInfo.UIState = UIStatus.Dead;
+            UIInfo.Cost = 1;
         }
     }
 
-    [BurstCompile]
-    public static int2 GetChunkNum(float3 Pos, float ChunkSize)
-    {
-        //return new int2(Mathf.FloorToInt(Pos.x / ChunkSize), Mathf.FloorToInt(Pos.z / ChunkSize));
-        return new int2((int)math.floor(Pos.x / ChunkSize), (int)math.floor(Pos.z / ChunkSize));
-    }
+    //[BurstCompile]
+    //public static int2 GetChunkNum(float3 Pos, float ChunkSize)
+    //{
+    //    //return new int2(Mathf.FloorToInt(Pos.x / ChunkSize), Mathf.FloorToInt(Pos.z / ChunkSize));
+    //    return new int2((int)math.floor(Pos.x / ChunkSize), (int)math.floor(Pos.z / ChunkSize));
+    //}
 
     [BurstCompile]
     public Color CalculateBiomeColour(float3 Pos, ref ChunkMaster MapInfo)
@@ -160,7 +162,7 @@ public partial class Player : SystemBase
     [BurstCompile]
     public bool IsSafe(int3 Pos, int MaxDangerLevel, ref ChunkMaster MapInfo)
     {
-        if(!MapInfo.Chunks.TryGetValue(GetChunkNum(Pos, MapInfo.ChunkSize), out Entity ChunkEntity))
+        if(!MapInfo.Chunks.TryGetValue(MapInfo.GetChunkNum(Pos), out Entity ChunkEntity))
         {
             Debug.Log("chunk isnt real?");
             return true;
@@ -188,7 +190,7 @@ public partial class Player : SystemBase
     [BurstCompile]
     public void DevourBlocks(int3 Pos, ref ChunkMaster MapInfo, ref PlayerData Stats)
     {
-        if (!MapInfo.Chunks.TryGetValue(GetChunkNum(Pos, MapInfo.ChunkSize), out Entity ChunkEntity))
+        if (!MapInfo.Chunks.TryGetValue(MapInfo.GetChunkNum(Pos), out Entity ChunkEntity))
         {
             Debug.Log("Chunk isnt real?");
             return;

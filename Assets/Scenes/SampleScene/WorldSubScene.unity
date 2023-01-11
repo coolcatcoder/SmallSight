@@ -214,7 +214,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &531963667
 GameObject:
@@ -286,7 +286,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &571508647
 GameObject:
@@ -365,7 +365,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &736213427
 GameObject:
@@ -502,8 +502,141 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1539879107
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1539879110}
+  - component: {fileID: 1539879109}
+  - component: {fileID: 1539879108}
+  - component: {fileID: 1539879112}
+  - component: {fileID: 1539879111}
+  m_Layer: 0
+  m_Name: Perks And Curses
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1539879108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539879107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3244d391131dc864eb331fa7d9baa75e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Curses:
+  - Description: Player is invisible.
+    Cost: 15
+  - Description: Spiccaro move around.
+    Cost: 3
+  - Description: All biomes contain a few velvet slicers.
+    Cost: 1
+  - Description: Fire can burn stamina rock.
+    Cost: 2
+--- !u!114 &1539879109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539879107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf880d57250e016499363c55aef4783a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Perks:
+  - Description: Almanac will have more information about each plant.
+    Cost: 1
+  - Description: Respawning and teleporting will never put you in a harmful biome.
+    Cost: 3
+  - Description: Devouring animals gives you health and stamina.
+    Cost: 5
+  - Description: Eating a velvet slicer will give you a small amount of stamina.
+    Cost: 2
+  - Description: You will be immune to fire.
+    Cost: 10
+--- !u!4 &1539879110
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539879107}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1539879111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539879107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d5bea4a4844c341864dc1c013b55c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MultiUseCurses:
+  - Description: Spawn with less health.
+    Cost: 1
+  - Description: Spawn with less stamina.
+    Cost: 2
+  - Description: Spawn with less teleports.
+    Cost: 2
+  - Description: Spawn with less strength.
+    Cost: 6
+  - Description: Spawn with less sight.
+    Cost: 8
+  - Description: Warps are more likely to be extremely dangerous.
+    Cost: 12
+--- !u!114 &1539879112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539879107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ca51683397f0f1449b4e5a3f62e1119, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MultiUsePerks:
+  - Description: Spawn with more health.
+    Cost: 1
+  - Description: Spawn with more stamina.
+    Cost: 2
+  - Description: Spawn with more teleports.
+    Cost: 2
+  - Description: Spawn with more strength.
+    Cost: 6
+  - Description: Spawn with more sight.
+    Cost: 8
+  - Description: Warps spawn more often.
+    Cost: 5
+  - Description: Warps are more likely to be mild.
+    Cost: 3
+  - Description: Warps are more likely to be fantastic.
+    Cost: 12
 --- !u!1 &1602326173
 GameObject:
   m_ObjectHideFlags: 0
@@ -602,7 +735,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1739204785
 GameObject:
@@ -674,7 +807,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1780829028
 GameObject:
@@ -740,7 +873,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1780829032
 MonoBehaviour:
