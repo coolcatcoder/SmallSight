@@ -9,18 +9,18 @@ using Unity.Collections;
 using System;
 using Unity.Burst;
 
-public partial class Player : SystemBase
+public partial struct Player : ISystem, ISystemStartStop
 {
-    protected override void OnCreate()
+    public void OnCreate(ref SystemState state)
     {
-        //RequireForUpdate<FinishedGenerating>();
+        state.RequireForUpdate<InputData>();
     }
-    protected override void OnStartRunning()
+    public void OnStartRunning(ref SystemState state)
     {
-        UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[0].AddListener(Move);
+
     }
 
-    protected override void OnUpdate()
+    public void OnUpdate(ref SystemState state)
     {
         ref var PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         Entity PlayerEntity = SystemAPI.GetSingletonEntity<PlayerData>();
@@ -33,15 +33,22 @@ public partial class Player : SystemBase
 
             PlayerInfo.DebugChunkColour = CalculateBiomeColour(PlayerTransform.Position, ref MapInfo);
         }
+
+        Move(ref state);
     }
 
-    public void Move(InputAction.CallbackContext context)
+    public void OnStopRunning(ref SystemState state)
     {
-        if (context.canceled || context.started)
-        {
-            return;
-        }
 
+    }
+
+    public void OnDestroy(ref SystemState state)
+    {
+
+    }
+
+    public void Move(ref SystemState state)
+    {
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
 
         if (PlayerInfo.VisibleStats.x <= 0)
@@ -49,59 +56,50 @@ public partial class Player : SystemBase
             return;
         }
 
-        EntityQuery PlayerQuery = new EntityQueryBuilder(Allocator.Temp)
-            .WithAllRW<PlayerData>()
-            .WithAllRW<LocalTransform>()
-            .Build(this);
+        ref LocalTransform PlayerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW;
+        ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
 
-        Entity PlayerEntity = PlayerQuery.ToEntityArray(Allocator.Temp)[0];
+        float3 NewPos = PlayerTransform.Position;
 
-        var PTransform = SystemAPI.GetComponent<LocalTransform>(PlayerEntity);
-        //var PTransform = SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(PlayerEntity, false).ValueRW;
-        var PData = SystemAPI.GetComponent<PlayerData>(PlayerEntity);
-
-        float3 NewPos = PTransform.Position;
-
-        float2 Movement = context.ReadValue<Vector2>();
-
-        if (Movement.x >= PData.MovementThreshold)
+        if (InputInfo.Movement.x >= PlayerInfo.MovementThreshold)
         {
             NewPos.x += 1;
         }
-        else if (Movement.x <= -PData.MovementThreshold)
+        else if (InputInfo.Movement.x <= -PlayerInfo.MovementThreshold)
         {
             NewPos.x -= 1;
         }
 
-        if (Movement.y >= PData.MovementThreshold)
+        if (InputInfo.Movement.y >= PlayerInfo.MovementThreshold)
         {
             NewPos.z += 1;
         }
-        else if (Movement.y <= -PData.MovementThreshold)
+        else if (InputInfo.Movement.y <= -PlayerInfo.MovementThreshold)
         {
             NewPos.z -= 1;
         }
 
         //Debug.Log(NewPos);
 
-        if (math.all(NewPos == PTransform.Position))
+        if (math.all(NewPos == PlayerTransform.Position))
         {
             return;
         }
 
         ref ChunkMaster MapInfo = ref SystemAPI.GetSingletonRW<ChunkMaster>().ValueRW;
 
-        if (!IsSafe((int3)NewPos, SystemAPI.GetSingleton<PlayerData>().MaxDanger, ref MapInfo))
+        if (!MapInfo.IsSafe((int3)NewPos, SystemAPI.GetSingleton<PlayerData>().MaxDanger, ref state))
         {
             return;
         }
 
-        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(PlayerEntity, false).ValueRW.Position = NewPos;
+        PlayerTransform.Position = NewPos;
 
         var NewCamPos = NewPos;
         NewCamPos.y = 5;
 
-        ref CameraData Cam = ref SystemAPI.GetComponentLookup<CameraData>().GetRefRW(PlayerEntity, false).ValueRW;
+        //ref CameraData Cam = ref SystemAPI.GetComponentLookup<CameraData>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW;
+        ref CameraData Cam = ref SystemAPI.GetSingletonRW<CameraData>().ValueRW;
         Cam.Pos = (int3)NewCamPos;
 
         MapInfo.ChunksToGenerate.Add(MapInfo.GetChunkNum(NewPos));
@@ -110,7 +108,7 @@ public partial class Player : SystemBase
         SystemAPI.GetSingletonRW<PlayerData>().ValueRW.DebugChunkColour = CalculateBiomeColour(NewPos, ref MapInfo);
 
         PlayerInfo.VisibleStats.y -= 1;
-        DevourBlocks((int3)NewPos, ref MapInfo, ref PlayerInfo);
+        DevourBlocks((int3)NewPos, ref MapInfo, ref PlayerInfo, ref state);
 
         if (PlayerInfo.VisibleStats.y < 0)
         {
@@ -159,36 +157,36 @@ public partial class Player : SystemBase
                 );
     }
 
+    //[BurstCompile]
+    //public bool IsSafe(int3 Pos, int MaxDangerLevel, ref ChunkMaster MapInfo)
+    //{
+    //    if(!MapInfo.Chunks.TryGetValue(MapInfo.GetChunkNum(Pos), out Entity ChunkEntity))
+    //    {
+    //        Debug.Log("chunk isnt real?");
+    //        return true;
+    //    }
+
+    //    if (ChunkEntity == Entity.Null)
+    //    {
+    //        Debug.Log("Couldn't get chunk entity, assuming safe!");
+    //        return true;
+    //    }
+
+    //    DynamicBuffer<EntityHerd> StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);
+
+    //    for (int i = 0; i < StuffInChunk.Length; i++)
+    //    {
+    //        if (StuffInChunk[i].Danger > MaxDangerLevel && math.all(Pos.xz == (int2)SystemAPI.GetComponent<LocalTransform>(StuffInChunk[i].Block).Position.xz))
+    //        {
+    //            return false;
+    //        }
+    //    }
+
+    //    return true;
+    //}
+
     [BurstCompile]
-    public bool IsSafe(int3 Pos, int MaxDangerLevel, ref ChunkMaster MapInfo)
-    {
-        if(!MapInfo.Chunks.TryGetValue(MapInfo.GetChunkNum(Pos), out Entity ChunkEntity))
-        {
-            Debug.Log("chunk isnt real?");
-            return true;
-        }
-
-        if (ChunkEntity == Entity.Null)
-        {
-            Debug.Log("Couldn't get chunk entity, assuming safe!");
-            return true;
-        }
-
-        DynamicBuffer<EntityHerd> StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);
-
-        for (int i = 0; i < StuffInChunk.Length; i++)
-        {
-            if (StuffInChunk[i].Danger > MaxDangerLevel && math.all(Pos.xz == (int2)SystemAPI.GetComponent<LocalTransform>(StuffInChunk[i].Block).Position.xz))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    [BurstCompile]
-    public void DevourBlocks(int3 Pos, ref ChunkMaster MapInfo, ref PlayerData Stats)
+    public void DevourBlocks(int3 Pos, ref ChunkMaster MapInfo, ref PlayerData Stats, ref SystemState state)
     {
         if (!MapInfo.Chunks.TryGetValue(MapInfo.GetChunkNum(Pos), out Entity ChunkEntity))
         {
@@ -215,7 +213,7 @@ public partial class Player : SystemBase
                 Stats.VisibleStats += Block.VisibleStats;
                 Stats.HiddenStats += Block.HiddenStats;
 
-                World.EntityManager.DestroyEntity(EntityToRemove);
+                state.EntityManager.DestroyEntity(EntityToRemove);
                 StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);
                 StuffInChunk.RemoveAt(i);
                 StuffInChunk = SystemAPI.GetBuffer<EntityHerd>(ChunkEntity);

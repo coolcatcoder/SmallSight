@@ -49,7 +49,7 @@ public struct ChunkMaster : IComponentData
     }
 
     [BurstCompile]
-    public bool IsSafe(int3 Pos, int MaxDangerLevel)
+    public bool IsSafe(int3 Pos, int MaxDangerLevel, ref SystemState state)
     {
         if (!Chunks.TryGetValue(GetChunkNum(Pos), out Entity ChunkEntity))
         {
