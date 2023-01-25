@@ -129,4 +129,20 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             return;
         }
     }
+
+    public partial struct BiomeEntityJob : IJobEntity
+    {
+        [ReadOnly]
+        public Color BlockColour;
+
+        public NativeReference<Entity> BiomeEntity;
+
+        void Execute(ref BiomeData Biome, Entity entity)
+        {
+            if (math.distance(((float4)(Vector4)Biome.ColourSpawn).xyz, ((float4)(Vector4)BlockColour).xyz) <= Biome.MaxDistance/100)
+            {
+                BiomeEntity.Value = entity;
+            }
+        }
+    }
 }
