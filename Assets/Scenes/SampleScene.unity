@@ -187,7 +187,6 @@ GameObject:
   - component: {fileID: 248503512}
   - component: {fileID: 248503511}
   - component: {fileID: 248503513}
-  - component: {fileID: 248503514}
   m_Layer: 0
   m_Name: ChaosStuff
   m_TagString: Untagged
@@ -223,7 +222,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 248503513}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PlayerInputThrower, Assembly-CSharp
         m_MethodName: Move
         m_Mode: 0
@@ -287,7 +286,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 248503513}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PlayerInputThrower, Assembly-CSharp
         m_MethodName: Restart
         m_Mode: 0
@@ -330,19 +329,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 248503510}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17150ea019bdd6842a960a2a71ee750a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &248503514
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248503510}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92994712659f9704eb4f312b67a8e1e7, type: 3}
+  m_Script: {fileID: 11500000, guid: 903616cf9a0de9047b81cefdf4cc5e76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   GCam: {fileID: 330585543}
@@ -475,6 +462,13 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
+  m_TaaSettings:
+    quality: 3
+    frameInfluence: 0.1
+    jitterScale: 1
+    mipBias: 0
+    varianceClampScale: 0.9
+    contrastAdaptiveSharpening: 0
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -582,7 +576,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Version: 2
+  m_Version: 3
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
   m_LightLayerMask: 1
@@ -592,7 +586,7 @@ MonoBehaviour:
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 1
+  m_SoftShadowQuality: 2
 --- !u!1 &668927470
 GameObject:
   m_ObjectHideFlags: 0

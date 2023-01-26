@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 5019743421359492501}
   - component: {fileID: 947831312403054072}
   - component: {fileID: 204732662716743343}
-  - component: {fileID: -4707324029886854817}
+  - component: {fileID: 743825225219121971}
+  - component: {fileID: 4386331956348317525}
   m_Layer: 0
   m_Name: CircleTerrain
   m_TagString: Untagged
@@ -32,7 +33,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &947831312403054072
 MeshFilter:
@@ -84,7 +85,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &-4707324029886854817
+--- !u!114 &743825225219121971
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -93,17 +94,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 1862855503442099543}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ffb5a1e5f514354ba492da6d3aecd92, type: 3}
+  m_Script: {fileID: 11500000, guid: 306ce2361cfc3f149baebec788f3b749, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VisibleStats:
+  StrengthToWalkOn: 2
+  VisibleStatsChange:
     x: 0
     y: 0
     z: 0
     w: 0
-  HiddenStats:
+  HiddenStatsChange:
     x: 0
     y: 0
     z: 0
     w: 0
-  ConsumedBehaviour: 0
+--- !u!114 &4386331956348317525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1862855503442099543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

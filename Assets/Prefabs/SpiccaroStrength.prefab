@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 366882881114693034}
   - component: {fileID: 7303848985644856316}
   - component: {fileID: 4912369038166054591}
-  - component: {fileID: 3111791263353891019}
+  - component: {fileID: 9047276973378274887}
+  - component: {fileID: 7214583916115412570}
   m_Layer: 0
   m_Name: SpiccaroStrength
   m_TagString: Untagged
@@ -84,7 +85,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3111791263353891019
+--- !u!114 &9047276973378274887
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -93,17 +94,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 866482175634483713}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ffb5a1e5f514354ba492da6d3aecd92, type: 3}
+  m_Script: {fileID: 11500000, guid: 306ce2361cfc3f149baebec788f3b749, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VisibleStats:
-    x: -100
-    y: -100
-    z: 0
-    w: 1
-  HiddenStats:
+  StrengthToWalkOn: 0
+  VisibleStatsChange:
     x: 0
     y: 0
     z: 0
     w: 0
-  ConsumedBehaviour: 0
+  HiddenStatsChange:
+    x: 0
+    y: 0
+    z: 0
+    w: 0
+--- !u!114 &7214583916115412570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866482175634483713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

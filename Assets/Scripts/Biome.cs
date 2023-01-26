@@ -38,7 +38,7 @@ public class BiomeBaker : Baker<Biome>
                 {
                     FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab),
                     PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
-                    Danger = authoring.Features[i].Danger,
+                    //Danger = authoring.Features[i].Danger,
                     IsTerrain = authoring.Features[i].IsTerrain,
                     MinNoiseValue = authoring.Features[i].MinNoiseValue,
                     MaxNoiseValue = authoring.Features[i].MaxNoiseValue
@@ -63,7 +63,7 @@ public struct BiomeFeature : IBufferElementData
 {
     public Entity FeaturePrefab;
     public float PercentChanceToSpawn;
-    public int Danger;
+    //public int Danger;
     public bool IsTerrain;
     public float MinNoiseValue;
     public float MaxNoiseValue;
@@ -74,7 +74,7 @@ public struct BiomeAuthoringFeature
 {
     public GameObject FeaturePrefab;
     public float PercentChanceToSpawn;
-    public int Danger;
+    //public int Danger;
     public bool IsTerrain;
     public float MinNoiseValue;
     public float MaxNoiseValue;
