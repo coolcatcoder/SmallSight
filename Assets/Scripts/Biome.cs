@@ -8,6 +8,7 @@ using Unity.Collections;
 public class Biome : MonoBehaviour
 {
     public string BiomeName;
+    public int WorldIndex = 0;
     public BiomeAuthoringFeature[] Features;
     public float ExtraTerrainNoiseScale;
     public bool TeleportSafe;
@@ -28,7 +29,8 @@ public class BiomeBaker : Baker<Biome>
                 ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
                 TeleportSafe = authoring.TeleportSafe,
                 ColourSpawn = authoring.ColourSpawn,
-                MaxDistance = authoring.MaxDistance
+                MaxDistance = authoring.MaxDistance,
+                WorldIndex = authoring.WorldIndex
             });
 
             var FeatureBuffer = AddBuffer<BiomeFeature>();
@@ -51,6 +53,7 @@ public class BiomeBaker : Baker<Biome>
 public struct BiomeData : IComponentData
 {
     public NativeText BiomeName;
+    public int WorldIndex;
     public float ExtraTerrainNoiseScale;
     public bool TeleportSafe;
 

@@ -99,12 +99,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StrengthToWalkOn: 0
   VisibleStatsChange:
-    x: 0
-    y: 0
+    x: -100
+    y: -100
     z: 0
     w: 0
   HiddenStatsChange:
-    x: 0
+    x: 1
     y: 0
     z: 0
     w: 0

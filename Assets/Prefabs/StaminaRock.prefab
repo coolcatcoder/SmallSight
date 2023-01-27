@@ -100,7 +100,7 @@ MonoBehaviour:
   StrengthToWalkOn: 0
   VisibleStatsChange:
     x: 0
-    y: 7
+    y: 3
     z: 0
     w: 0
   HiddenStatsChange:

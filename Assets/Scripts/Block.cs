@@ -8,9 +8,12 @@ using Unity.Collections;
 public class Block : MonoBehaviour
 {
     public int StrengthToWalkOn;
+    public bool ConsumeOnCollision = true;
 
     public float4 VisibleStatsChange;
     public float4 HiddenStatsChange;
+
+    public SpecialBehaviour Behaviour = SpecialBehaviour.None;
 }
 
 public class BlockBaker : Baker<Block>
@@ -21,7 +24,9 @@ public class BlockBaker : Baker<Block>
         {
             StrengthToWalkOn = authoring.StrengthToWalkOn,
             VisibleStatsChange = authoring.VisibleStatsChange,
-            HiddenStatsChange = authoring.HiddenStatsChange
+            HiddenStatsChange = authoring.HiddenStatsChange,
+            ConsumeOnCollision = authoring.ConsumeOnCollision,
+            Behaviour = authoring.Behaviour
         });
     }
 }
@@ -29,7 +34,16 @@ public class BlockBaker : Baker<Block>
 public struct BlockData : IComponentData
 {
     public int StrengthToWalkOn;
+    public bool ConsumeOnCollision;
 
     public float4 VisibleStatsChange;
     public float4 HiddenStatsChange;
+
+    public SpecialBehaviour Behaviour;
+}
+
+public enum SpecialBehaviour
+{
+    None,
+    Warp
 }

@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
         <ui:VisualElement name="Stats" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); right: auto; left: 10%; top: 20%;">
+            <ui:Label tabindex="-1" text="Testing?" display-tooltip-when-elided="true" name="BiomeText" style="font-size: 30%; color: rgb(255, 255, 255); -unity-text-align: upper-left;" />
             <ui:Label tabindex="-1" text="Testing?" display-tooltip-when-elided="true" name="StatsText" style="font-size: 50%; color: rgb(255, 255, 255);" />
         </ui:VisualElement>
         <ui:VisualElement name="PerksAndCurses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 75%; height: 90%; left: 12.5%; bottom: auto; align-items: center; flex-direction: column;">

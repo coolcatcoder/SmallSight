@@ -19,6 +19,8 @@ public class MapMaker : MonoBehaviour
 
     public int2 MaxTeleportBounds;
     public int2 MinTeleportBounds;
+
+    public int WorldIndex = 0;
 }
 
 public class MapMakerBaker : Baker<MapMaker>
@@ -35,6 +37,7 @@ public class MapMakerBaker : Baker<MapMaker>
             TerrainNoiseScale = authoring.TerrainNoiseScale,
             MaxTeleportBounds = authoring.MaxTeleportBounds,
             MinTeleportBounds = authoring.MinTeleportBounds,
+            WorldIndex = authoring.WorldIndex
         });
     }
 }
@@ -60,6 +63,8 @@ public struct MapData : IComponentData
     public Unity.Mathematics.Random RandStruct;
 
     public bool RestartGame;
+
+    public int WorldIndex;
 }
 
 public static class MapExtensionMethods
@@ -93,7 +98,7 @@ public static class MapExtensionMethods
     }
 
     [BurstCompile]
-    public static float GetNoise(this MapData MapInfo, int2 Pos, BiomeData Biome)
+    public static float GetNoise(this MapData MapInfo, int2 Pos, BiomeData Biome) //what is this?
     {
         float2 SeededPos = Pos;
         SeededPos.x += MapInfo.Seed;
@@ -118,7 +123,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
     }
 
-    public void OnUpdate(ref SystemState state) //set the UIData to have the biome name in it, do it from here, good luck, im tired, night....
+    public void OnUpdate(ref SystemState state)
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
 
@@ -200,6 +205,16 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             return;
         }
 
+        if (InputInfo.Teleport)
+        {
+            InputInfo.Teleport = false;
+            ref LocalTransform PlayerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW;
+
+            PlayerTransform.Position.xz = FindSafePos(ref state);
+
+            PlayerInfo.VisibleStats.z--;
+        }
+
         if (InputInfo.Pressed || (InputInfo.Held && (InputInfo.TimeHeldFor >= PlayerInfo.SecondsUntilHoldMovement)))
         {
             InputInfo.Pressed = false;
@@ -232,6 +247,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             if (!math.all(NewPos == PlayerTransform.Position))
             {
                 ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+                ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
 
                 if (MapInfo.GeneratedBlocks.TryGetValue((int2)NewPos.xz, out Entity BlockEntity))
                 {
@@ -247,19 +263,31 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
                         if (PlayerInfo.VisibleStats.x <= 0)
                         {
-                            SystemAPI.GetSingletonRW<UIData>().ValueRW.UIState = UIStatus.Dead;
+                            UIInfo.UIState = UIStatus.Dead;
                         }
+
+                        Color BiomeColour = MapInfo.GetBiomeColour((int2)NewPos.xz);
+                        UIInfo.BiomeColour = BiomeColour;
+                        UIInfo.BiomeName = SystemAPI.GetComponent<BiomeData>(GetBiomeEntity(MapInfo.WorldIndex, BiomeColour, ref state)).BiomeName;
                     }
                     else
                     {
                         BlockData BlockInfo = SystemAPI.GetComponent<BlockData>(BlockEntity);
                         if (PlayerInfo.VisibleStats.w >= BlockInfo.StrengthToWalkOn)
                         {
+                            if (BlockInfo.Behaviour == SpecialBehaviour.Warp)
+                            {
+                                MapInfo.RestartGame = true;
+                            }
+
                             PlayerInfo.VisibleStats += BlockInfo.VisibleStatsChange;
                             PlayerInfo.HiddenStats += BlockInfo.HiddenStatsChange;
 
-                            state.EntityManager.DestroyEntity(BlockEntity);
-                            MapInfo.GeneratedBlocks[(int2)NewPos.xz] = Entity.Null;
+                            if (BlockInfo.ConsumeOnCollision)
+                            {
+                                state.EntityManager.DestroyEntity(BlockEntity);
+                                MapInfo.GeneratedBlocks[(int2)NewPos.xz] = Entity.Null;
+                            }
 
                             PlayerTransform.Position = NewPos;
 
@@ -271,8 +299,12 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
                             if (PlayerInfo.VisibleStats.x <= 0)
                             {
-                                SystemAPI.GetSingletonRW<UIData>().ValueRW.UIState = UIStatus.Dead;
+                                UIInfo.UIState = UIStatus.Dead;
                             }
+
+                            Color BiomeColour = MapInfo.GetBiomeColour((int2)NewPos.xz);
+                            UIInfo.BiomeColour = BiomeColour;
+                            UIInfo.BiomeName = SystemAPI.GetComponent<BiomeData>(GetBiomeEntity(MapInfo.WorldIndex, BiomeColour, ref state)).BiomeName;
                         }
                     }
                 }
@@ -293,7 +325,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
         Entity BlockEntity = Entity.Null;
 
-        Entity BiomeEntity = GetBiomeEntity(MapInfo.GetBiomeColour(Pos), state);
+        Entity BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour(Pos), ref state);
         BiomeData Biome = SystemAPI.GetComponent<BiomeData>(BiomeEntity);
         float BlockNoise = MapInfo.GetNoise(Pos, Biome);
         //Debug.Log(BlockNoise);
@@ -331,12 +363,13 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         MapInfo.GeneratedBlocks.Add(Pos, BlockEntity);
     }
 
-    public Entity GetBiomeEntity(Color BlockColour, SystemState state)
+    public Entity GetBiomeEntity(int WorldIndex, Color BlockColour, ref SystemState state)
     {
         NativeReference<Entity> BEntity = new NativeReference<Entity>(Allocator.TempJob);
         BiomeEntityJob BJob = new BiomeEntityJob
         {
             BlockColour = BlockColour,
+            WorldIndex = WorldIndex,
             BiomeEntity = BEntity
         };
 
@@ -354,16 +387,20 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         return BiomeEntity;
     }
 
+    [BurstCompile]
     public partial struct BiomeEntityJob : IJobEntity
     {
         [ReadOnly]
         public Color BlockColour;
 
+        [ReadOnly]
+        public int WorldIndex;
+
         public NativeReference<Entity> BiomeEntity;
 
         void Execute(ref BiomeData Biome, Entity entity)
         {
-            if (math.distance(((float4)(Vector4)Biome.ColourSpawn).xyz, ((float4)(Vector4)BlockColour).xyz) <= Biome.MaxDistance/100)
+            if (Biome.WorldIndex == WorldIndex && math.distance(((float4)(Vector4)Biome.ColourSpawn).xyz, ((float4)(Vector4)BlockColour).xyz) <= Biome.MaxDistance)
             {
                 BiomeEntity.Value = entity;
             }

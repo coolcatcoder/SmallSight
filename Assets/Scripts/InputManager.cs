@@ -11,6 +11,7 @@ public partial class InputManager : SystemBase
     {
         EntityManager.AddComponent<InputData>(EntityManager.CreateEntity());
         UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[0].AddListener(ThrowInputs);
+        UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[11].AddListener(ThrowTeleport);
     }
 
     protected override void OnUpdate()
@@ -32,6 +33,13 @@ public partial class InputManager : SystemBase
         InputInfo.TimeHeldFor = 0;
         InputInfo.Movement = context.ReadValue<Vector2>();
     }
+
+    public void ThrowTeleport(InputAction.CallbackContext context)
+    {
+        ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
+        InputInfo.Teleport = !context.canceled;
+        //Debug.Log("telleeeeport????");
+    }
 }
 
 public struct InputData : IComponentData
@@ -40,4 +48,5 @@ public struct InputData : IComponentData
     public bool Held;
     public float TimeHeldFor;
     public float2 Movement;
+    public bool Teleport;
 }

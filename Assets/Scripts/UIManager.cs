@@ -55,7 +55,9 @@ public partial class UIManager : SystemBase
                 root.Q<VisualElement>("PerksAndCurses").visible = false;
                 root.Q<VisualElement>("GameOver").visible = false;
                 root.Q<VisualElement>("Stats").visible = true;
-                root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}\nCurrent Biome: {UIInfo.BiomeName}";
+                root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}";
+                root.Q<Label>("BiomeText").text = $"Biome: {UIInfo.BiomeName}";
+                root.Q<Label>("BiomeText").style.color = UIInfo.BiomeColour;
                 break;
 
             case UIStatus.Dead:
@@ -306,6 +308,7 @@ public struct UIData : IComponentData
     public UIStatus UIState;
     public bool Setup;
     public NativeText BiomeName;
+    public Color BiomeColour;
 }
 
 public struct PerkButtonElement : IBufferElementData
