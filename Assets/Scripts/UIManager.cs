@@ -9,6 +9,11 @@ using UnityEngine.UIElements;
 
 public partial class UIManager : SystemBase
 {
+    protected override void OnCreate()
+    {
+        RequireForUpdate<PlayerData>();
+    }
+
     protected override void OnStartRunning()
     {
         Entity UIEntity = EntityManager.CreateEntity();

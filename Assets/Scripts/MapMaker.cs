@@ -142,6 +142,9 @@ public partial struct MapSystem : ISystem, ISystemStartStop
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<InputData>();
+        state.RequireForUpdate<PlayerData>();
+        state.RequireForUpdate<MapDataWithoutBlocks>();
+        state.RequireForUpdate<UIData>();
     }
 
     public void OnStartRunning(ref SystemState state)
