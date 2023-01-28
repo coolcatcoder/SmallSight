@@ -25,7 +25,7 @@ public class BiomeBaker : Baker<Biome>
         {
             AddComponent(new BiomeData
             {
-                BiomeName = new NativeText(authoring.BiomeName, Allocator.Persistent),
+                BiomeName = authoring.BiomeName,
                 ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
                 TeleportSafe = authoring.TeleportSafe,
                 ColourSpawn = authoring.ColourSpawn,
@@ -52,7 +52,7 @@ public class BiomeBaker : Baker<Biome>
 
 public struct BiomeData : IComponentData
 {
-    public NativeText BiomeName;
+    public FixedString128Bytes BiomeName;
     public int WorldIndex;
     public float ExtraTerrainNoiseScale;
     public bool TeleportSafe;

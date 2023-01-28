@@ -21,7 +21,7 @@ public class PerksBaker : Baker<Perks>
             {
                 FeatureBuffer.Add(new PerkElement
                 {
-                    Description = new NativeText(authoring.MultiUsePerks[i].Description, Allocator.Persistent),
+                    Description = authoring.MultiUsePerks[i].Description,
                     Cost = authoring.MultiUsePerks[i].Cost,
                     AmountOwned = false
                 });
@@ -38,7 +38,7 @@ public class PerksBaker : Baker<Perks>
 [InternalBufferCapacity(0)]
 public struct PerkElement : IBufferElementData
 {
-    public NativeText Description;
+    public FixedString128Bytes Description;
     public int Cost;
     public bool AmountOwned;
 }

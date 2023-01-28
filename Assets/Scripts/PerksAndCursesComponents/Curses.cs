@@ -21,7 +21,7 @@ public class CursesBaker : Baker<Curses>
             {
                 FeatureBuffer.Add(new CurseElement
                 {
-                    Description = new NativeText(authoring.MultiUseCurses[i].Description, Allocator.Persistent),
+                    Description = authoring.MultiUseCurses[i].Description,
                     Cost = authoring.MultiUseCurses[i].Cost,
                     AmountOwned = false
                 });
@@ -38,7 +38,7 @@ public class CursesBaker : Baker<Curses>
 [InternalBufferCapacity(0)]
 public struct CurseElement : IBufferElementData
 {
-    public NativeText Description;
+    public FixedString128Bytes Description;
     public int Cost;
     public bool AmountOwned;
 }

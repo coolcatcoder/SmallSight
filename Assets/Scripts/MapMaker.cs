@@ -27,9 +27,10 @@ public class MapMakerBaker : Baker<MapMaker>
 {
     public override void Bake(MapMaker authoring)
     {
-        AddComponent(new MapData
+        AddComponent(new MapDataWithoutBlocks
         {
-            GeneratedBlocks = new NativeHashMap<Unity.Mathematics.int2, Entity>(authoring.MaxBlocks, Allocator.Persistent),
+            //GeneratedBlocks = new NativeHashMap<Unity.Mathematics.int2, Entity>(authoring.MaxBlocks, Allocator.Persistent),
+            MaxBlocks = authoring.MaxBlocks,
             MaxSeed = authoring.MaxSeed,
             MinBiomeSeed = authoring.MinBiomeSeed,
             MaxBiomeSeed = authoring.MaxBiomeSeed,
@@ -42,9 +43,11 @@ public class MapMakerBaker : Baker<MapMaker>
     }
 }
 
+//[ChunkSerializable]
 public struct MapData : IComponentData
 {
     public NativeHashMap<int2, Entity> GeneratedBlocks;
+    public int MaxBlocks;
 
     public uint Seed;
     public uint MaxSeed;
@@ -66,6 +69,34 @@ public struct MapData : IComponentData
 
     public int WorldIndex;
 }
+
+[ChunkSerializable]
+public struct MapDataWithoutBlocks : IComponentData
+{
+    //public NativeHashMap<int2, Entity> GeneratedBlocks;
+    public int MaxBlocks;
+
+    public uint Seed;
+    public uint MaxSeed;
+
+    public float3 MinBiomeSeed;
+    public float3 MaxBiomeSeed;
+
+    public float3 BiomeSeed;
+    public float BiomeNoiseScale;
+
+    public float TerrainNoiseScale;
+
+    public int2 MaxTeleportBounds;
+    public int2 MinTeleportBounds;
+
+    public Unity.Mathematics.Random RandStruct;
+
+    public bool RestartGame;
+
+    public int WorldIndex;
+}
+
 
 public static class MapExtensionMethods
 {
@@ -115,7 +146,11 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
     public void OnStartRunning(ref SystemState state)
     {
+        SetupMapData(ref state);
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+
+        MapInfo.GeneratedBlocks = new NativeHashMap<int2, Entity>(MapInfo.MaxBlocks, Allocator.Persistent);
+
         MapInfo.RandomiseSeeds();
 
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
@@ -173,6 +208,30 @@ public partial struct MapSystem : ISystem, ISystemStartStop
     public void OnDestroy(ref SystemState state)
     {
 
+    }
+
+    public void SetupMapData(ref SystemState state)
+    {
+        ref MapDataWithoutBlocks MD = ref SystemAPI.GetSingletonRW<MapDataWithoutBlocks>().ValueRW;
+        Entity MapEntity = SystemAPI.GetSingletonEntity<MapDataWithoutBlocks>();
+
+        state.EntityManager.AddComponent<MapData>(MapEntity);
+        state.EntityManager.SetComponentData(MapEntity, new MapData
+        {
+            MaxBlocks = MD.MaxBlocks,
+            Seed = MD.Seed,
+            MaxSeed = MD.MaxSeed,
+            MinBiomeSeed = MD.MinBiomeSeed,
+            MaxBiomeSeed = MD.MaxBiomeSeed,
+            BiomeSeed = MD.BiomeSeed,
+            BiomeNoiseScale = MD.BiomeNoiseScale,
+            TerrainNoiseScale = MD.TerrainNoiseScale,
+            MaxTeleportBounds = MD.MaxTeleportBounds,
+            MinTeleportBounds = MD.MinTeleportBounds,
+            RandStruct = MD.RandStruct,
+            RestartGame = MD.RestartGame,
+            WorldIndex = MD.WorldIndex
+        });
     }
 
     public int2 FindSafePos(ref SystemState state)

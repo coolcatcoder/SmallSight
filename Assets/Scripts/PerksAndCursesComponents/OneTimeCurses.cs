@@ -21,7 +21,7 @@ public class OneTimeCursesBaker : Baker<OneTimeCurses>
             {
                 FeatureBuffer.Add(new OneTimeCurseElement
                 {
-                    Description = new NativeText(authoring.Curses[i].Description, Allocator.Persistent),
+                    Description = authoring.Curses[i].Description,
                     Cost = authoring.Curses[i].Cost,
                     Used = false
                 });
@@ -38,7 +38,7 @@ public class OneTimeCursesBaker : Baker<OneTimeCurses>
 [InternalBufferCapacity(0)]
 public struct OneTimeCurseElement : IBufferElementData
 {
-    public NativeText Description;
+    public FixedString128Bytes Description;
     public int Cost;
     public bool Used;
 }

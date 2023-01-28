@@ -307,7 +307,7 @@ public struct UIData : IComponentData
     public int Cost;
     public UIStatus UIState;
     public bool Setup;
-    public NativeText BiomeName;
+    public FixedString128Bytes BiomeName;
     public Color BiomeColour;
 }
 
@@ -317,7 +317,7 @@ public struct PerkButtonElement : IBufferElementData
     public bool OneTimeUsePerk;
     public bool Selected;
     public int CostToAdd;
-    public NativeText Description;
+    public FixedString128Bytes Description;
 }
 
 public struct CurseButtonElement : IBufferElementData
@@ -326,7 +326,7 @@ public struct CurseButtonElement : IBufferElementData
     public bool OneTimeUseCurse;
     public bool Selected;
     public int CostToRemove;
-    public NativeText Description;
+    public FixedString128Bytes Description;
 }
 
 public enum UIStatus
