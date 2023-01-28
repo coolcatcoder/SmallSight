@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4386331956348317525}
   - component: {fileID: -6821707267335941035}
   m_Layer: 0
-  m_Name: HarmSwish
+  m_Name: TeleportSwish
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -64,7 +64,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 24b8cc89ccb93154db4b65a8d51cf54e, type: 2}
+  - {fileID: 2100000, guid: 25d1ac8ffb0feef4f931085ad328a190, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -101,9 +101,9 @@ MonoBehaviour:
   StrengthToWalkOn: 0
   ConsumeOnCollision: 0
   VisibleStatsChange:
-    x: -1
+    x: 0
     y: 0
-    z: -1
+    z: 1
     w: 0
   HiddenStatsChange:
     x: 0
@@ -135,5 +135,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15d4008ea85e6064781759529d8c8a10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ReplacementBlock: {fileID: 1862855503442099543, guid: a5427d912862cf940a9779409a2659a2,
+  ReplacementBlock: {fileID: 1862855503442099543, guid: 97ee5b7649ca5a34e88a44f1e76ddc22,
     type: 3}

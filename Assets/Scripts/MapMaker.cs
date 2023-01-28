@@ -205,7 +205,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             return;
         }
 
-        if (InputInfo.Teleport)
+        if (InputInfo.Teleport && PlayerInfo.VisibleStats.z > 0)
         {
             InputInfo.Teleport = false;
             ref LocalTransform PlayerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW;
@@ -275,18 +275,41 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                         BlockData BlockInfo = SystemAPI.GetComponent<BlockData>(BlockEntity);
                         if (PlayerInfo.VisibleStats.w >= BlockInfo.StrengthToWalkOn)
                         {
-                            if (BlockInfo.Behaviour == SpecialBehaviour.Warp)
-                            {
-                                MapInfo.RestartGame = true;
-                            }
-
                             PlayerInfo.VisibleStats += BlockInfo.VisibleStatsChange;
                             PlayerInfo.HiddenStats += BlockInfo.HiddenStatsChange;
 
-                            if (BlockInfo.ConsumeOnCollision)
+                            if (BlockInfo.ConsumeOnCollision && (BlockInfo.Behaviour != SpecialBehaviour.Replace))
                             {
                                 state.EntityManager.DestroyEntity(BlockEntity);
                                 MapInfo.GeneratedBlocks[(int2)NewPos.xz] = Entity.Null;
+                            }
+
+                            switch (BlockInfo.Behaviour)
+                            {
+                                case SpecialBehaviour.Warp:
+                                    MapInfo.RestartGame = true;
+
+                                    bool IsDangerous = MapInfo.RandStruct.NextFloat() < (PlayerInfo.ChanceOfDangerousWarp / 100f);
+                                    bool Outcome = !IsDangerous;
+                                    int WorldIndex = 0;
+                                    DynamicBuffer<WorldData> Worlds = SystemAPI.GetSingletonBuffer<WorldData>();
+
+                                    while (Outcome != IsDangerous)
+                                    {
+                                        WorldIndex = MapInfo.RandStruct.NextInt(0, Worlds.Length);
+                                        Outcome = Worlds[WorldIndex].Dangerous;
+                                    }
+
+                                    MapInfo.WorldIndex = WorldIndex;
+
+                                    break;
+
+                                case SpecialBehaviour.Replace:
+                                    Entity NewBlock = state.EntityManager.Instantiate(SystemAPI.GetComponent<ReplaceBehaviourData>(BlockEntity).ReplacementBlock);
+                                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(NewBlock, false).ValueRW.Position = new float3(NewPos.x, -1, NewPos.z);
+                                    state.EntityManager.DestroyEntity(BlockEntity);
+                                    MapInfo.GeneratedBlocks[(int2)NewPos.xz] = NewBlock;
+                                    break;
                             }
 
                             PlayerTransform.Position = NewPos;

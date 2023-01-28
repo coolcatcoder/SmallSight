@@ -14,6 +14,8 @@ public class Player : MonoBehaviour
     public float HeldMovementDelay = 0.2f;
 
     public int GenerationThickness = 1;
+
+    public float ChanceOfDangerousWarp = 50;
 }
 
 public class PlayerBaker : Baker<Player>
@@ -26,7 +28,8 @@ public class PlayerBaker : Baker<Player>
             HeldMovementDelay = authoring.HeldMovementDelay,
             GenerationThickness = authoring.GenerationThickness,
             DefaultVisibleStats = authoring.DefaultVisibleStats,
-            DefaultHiddenStats = authoring.DefaultHiddenStats
+            DefaultHiddenStats = authoring.DefaultHiddenStats,
+            ChanceOfDangerousWarp = authoring.ChanceOfDangerousWarp
         });
     }
 }
@@ -42,4 +45,6 @@ public struct PlayerData : IComponentData
     public float HeldMovementDelay;
 
     public int GenerationThickness;
+
+    public float ChanceOfDangerousWarp;
 }

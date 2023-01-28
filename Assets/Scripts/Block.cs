@@ -45,5 +45,6 @@ public struct BlockData : IComponentData
 public enum SpecialBehaviour
 {
     None,
-    Warp
+    Warp,
+    Replace
 }
