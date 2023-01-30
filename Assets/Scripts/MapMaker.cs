@@ -66,6 +66,7 @@ public struct MapData : IComponentData
     public Unity.Mathematics.Random RandStruct;
 
     public bool RestartGame;
+    public bool KeepStats;
 
     public int WorldIndex;
 }
@@ -177,12 +178,20 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
             state.EntityManager.DestroyEntity(ResetQuery);
 
-            ref PlayerData PlayerInfoRW = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
-            PlayerInfoRW.VisibleStats = PlayerInfoRW.DefaultVisibleStats;
-            PlayerInfoRW.HiddenStats = PlayerInfoRW.DefaultHiddenStats;
+            if (!MapInfo.KeepStats)
+            {
+                ref PlayerData PlayerInfoRW = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+                PlayerInfoRW.VisibleStats = PlayerInfoRW.DefaultVisibleStats;
+                PlayerInfoRW.HiddenStats = PlayerInfoRW.DefaultHiddenStats;
+            }
+            else
+            {
+                MapInfo.KeepStats = false;
+            }
 
             ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
             UIInfo.UIState = UIStatus.Alive;
+            UIInfo.Setup = false;
         }
 
         MovePlayer(ref state);
@@ -261,8 +270,9 @@ public partial struct MapSystem : ISystem, ISystemStartStop
     {
         ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
 
-        if (PlayerInfo.VisibleStats.x <= 0)
+        if (PlayerInfo.VisibleStats.x <= 0 || UIInfo.UIState == UIStatus.MainMenu)
         {
             return;
         }
@@ -288,20 +298,20 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             ref LocalTransform PlayerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW;
             float3 NewPos = PlayerTransform.Position;
 
-            if (InputInfo.Movement.x >= 1)
+            if (InputInfo.Movement.x >= PlayerInfo.MinInputDetected)
             {
                 NewPos.x += 1;
             }
-            else if (InputInfo.Movement.x <= -1)
+            else if (InputInfo.Movement.x <= -PlayerInfo.MinInputDetected)
             {
                 NewPos.x -= 1;
             }
 
-            if (InputInfo.Movement.y >= 1)
+            if (InputInfo.Movement.y >= PlayerInfo.MinInputDetected)
             {
                 NewPos.z += 1;
             }
-            else if (InputInfo.Movement.y <= -1)
+            else if (InputInfo.Movement.y <= -PlayerInfo.MinInputDetected)
             {
                 NewPos.z -= 1;
             }
@@ -309,7 +319,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             if (!math.all(NewPos == PlayerTransform.Position))
             {
                 ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
-                ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+                //ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
 
                 if (MapInfo.GeneratedBlocks.TryGetValue((int2)NewPos.xz, out Entity BlockEntity))
                 {
@@ -337,19 +347,39 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                         BlockData BlockInfo = SystemAPI.GetComponent<BlockData>(BlockEntity);
                         if (PlayerInfo.VisibleStats.w >= BlockInfo.StrengthToWalkOn)
                         {
-                            PlayerInfo.VisibleStats += BlockInfo.VisibleStatsChange;
-                            PlayerInfo.HiddenStats += BlockInfo.HiddenStatsChange;
+                            if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.SkillStats))
+                            {
+                                SkillStatsBehaviourData SkillStatsInfo = SystemAPI.GetComponent<SkillStatsBehaviourData>(BlockEntity);
 
-                            if (BlockInfo.ConsumeOnCollision && (BlockInfo.Behaviour != SpecialBehaviour.Replace))
+                                if (PlayerInfo.PlayerSkills.HasFlag(SkillStatsInfo.Skill))
+                                {
+                                    PlayerInfo.VisibleStats += SkillStatsInfo.VisibleStatsChange;
+                                    PlayerInfo.HiddenStats += SkillStatsInfo.HiddenStatsChange;
+                                }
+                                else
+                                {
+                                    PlayerInfo.VisibleStats += BlockInfo.VisibleStatsChange;
+                                    PlayerInfo.HiddenStats += BlockInfo.HiddenStatsChange;
+                                }
+                            }
+                            else
+                            {
+                                PlayerInfo.VisibleStats += BlockInfo.VisibleStatsChange;
+                                PlayerInfo.HiddenStats += BlockInfo.HiddenStatsChange;
+                            }
+
+                            if (BlockInfo.ConsumeOnCollision && (!BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Replace)))
                             {
                                 state.EntityManager.DestroyEntity(BlockEntity);
                                 MapInfo.GeneratedBlocks[(int2)NewPos.xz] = Entity.Null;
                             }
 
-                            switch (BlockInfo.Behaviour)
+                            if (BlockInfo.Behaviour != SpecialBehaviour.None)
                             {
-                                case SpecialBehaviour.Warp:
+                                if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Warp))
+                                {
                                     MapInfo.RestartGame = true;
+                                    MapInfo.KeepStats = true;
 
                                     bool IsDangerous = MapInfo.RandStruct.NextFloat() < (PlayerInfo.ChanceOfDangerousWarp / 100f);
                                     bool Outcome = !IsDangerous;
@@ -363,15 +393,15 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                                     }
 
                                     MapInfo.WorldIndex = WorldIndex;
+                                }
 
-                                    break;
-
-                                case SpecialBehaviour.Replace:
+                                if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Replace))
+                                {
                                     Entity NewBlock = state.EntityManager.Instantiate(SystemAPI.GetComponent<ReplaceBehaviourData>(BlockEntity).ReplacementBlock);
                                     SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(NewBlock, false).ValueRW.Position = new float3(NewPos.x, -1, NewPos.z);
                                     state.EntityManager.DestroyEntity(BlockEntity);
                                     MapInfo.GeneratedBlocks[(int2)NewPos.xz] = NewBlock;
-                                    break;
+                                }
                             }
 
                             PlayerTransform.Position = NewPos;
@@ -466,7 +496,30 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
         if (BiomeEntity == Entity.Null)
         {
-            BiomeEntity = SystemAPI.GetSingletonEntity<DefaultBiomeData>();
+            BiomeEntity = GetDefaultBiomeEntity(WorldIndex, ref state);
+        }
+
+        return BiomeEntity;
+    }
+
+    public Entity GetDefaultBiomeEntity(int WorldIndex, ref SystemState state)
+    {
+        NativeReference<Entity> BEntity = new NativeReference<Entity>(Allocator.TempJob);
+        DefaultBiomeJob BJob = new DefaultBiomeJob
+        {
+            WorldIndex = WorldIndex,
+            BiomeEntity = BEntity
+        };
+
+        state.Dependency = BJob.Schedule(state.Dependency);
+        state.Dependency.Complete();
+
+        Entity BiomeEntity = BJob.BiomeEntity.Value;
+        BEntity.Dispose();
+
+        if (BiomeEntity == Entity.Null)
+        {
+            Debug.Log("Every world needs a default biome....");
         }
 
         return BiomeEntity;
@@ -486,6 +539,23 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         void Execute(ref BiomeData Biome, Entity entity)
         {
             if (Biome.WorldIndex == WorldIndex && math.distance(((float4)(Vector4)Biome.ColourSpawn).xyz, ((float4)(Vector4)BlockColour).xyz) <= Biome.MaxDistance)
+            {
+                BiomeEntity.Value = entity;
+            }
+        }
+    }
+
+    [BurstCompile]
+    public partial struct DefaultBiomeJob : IJobEntity
+    {
+        [ReadOnly]
+        public int WorldIndex;
+
+        public NativeReference<Entity> BiomeEntity;
+
+        void Execute(ref DefaultBiomeData DefaultBiome, Entity entity)
+        {
+            if (DefaultBiome.WorldIndex == WorldIndex)
             {
                 BiomeEntity.Value = entity;
             }

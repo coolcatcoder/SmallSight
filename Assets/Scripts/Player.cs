@@ -47,4 +47,17 @@ public struct PlayerData : IComponentData
     public int GenerationThickness;
 
     public float ChanceOfDangerousWarp;
+
+    public float MinInputDetected;
+
+    public Skills PlayerSkills;
+}
+
+[System.Flags]
+public enum Skills // info about bitwise and enums: https://www.alanzucconi.com/2015/07/26/enum-flags-and-bitwise-operators/
+{
+    None = 0,
+    Botanist = 1,
+    ThornWading = 2,
+    Exhausted = 4,
 }

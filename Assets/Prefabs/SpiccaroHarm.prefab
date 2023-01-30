@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4912369038166054591}
   - component: {fileID: -8300724214318923557}
   - component: {fileID: -6444686613002529295}
+  - component: {fileID: -5083211926508668491}
   m_Layer: 0
   m_Name: SpiccaroHarm
   m_TagString: Untagged
@@ -98,6 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   StrengthToWalkOn: 0
+  ConsumeOnCollision: 1
   VisibleStatsChange:
     x: -100
     y: -100
@@ -108,6 +110,7 @@ MonoBehaviour:
     y: 0
     z: 0
     w: 0
+  Behaviour: 4
 --- !u!114 &-6444686613002529295
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,3 +123,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-5083211926508668491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866482175634483713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cacd9a24bfb5d944a49074ee26064fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Skill: 1
+  VisibleStatsChange:
+    x: -50
+    y: -50
+    z: 0
+    w: 0
+  HiddenStatsChange:
+    x: 0
+    y: 0
+    z: 0
+    w: 0

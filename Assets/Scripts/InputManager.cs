@@ -12,6 +12,10 @@ public partial class InputManager : SystemBase
         EntityManager.AddComponent<InputData>(EntityManager.CreateEntity());
         UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[0].AddListener(ThrowInputs);
         UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[11].AddListener(ThrowTeleport);
+
+        var typeIndex = TypeManager.GetTypeIndexFromStableTypeHash(11380664438141642328);
+        var type = TypeManager.GetType(typeIndex);
+        Debug.Log(type);
     }
 
     protected override void OnUpdate()

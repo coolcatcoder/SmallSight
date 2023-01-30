@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.Rendering;
 
 public class CameraSync : MonoBehaviour
 {
@@ -14,7 +15,8 @@ public class CameraSync : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        var Wow = new DepthSorted_Tag();
+        Debug.Log(Wow);
     }
 
     // Update is called once per frame

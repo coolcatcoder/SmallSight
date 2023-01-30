@@ -19,6 +19,9 @@ public partial class UIManager : SystemBase
         Entity UIEntity = EntityManager.CreateEntity();
         EntityManager.AddComponent<UIData>(UIEntity);
 
+        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+        UIInfo.UIState = UIStatus.MainMenu;
+
         var BlankPerkButtons = new NativeArray<PerkButtonElement>(5, Allocator.Temp);
         EntityManager.AddBuffer<PerkButtonElement>(UIEntity).AddRange(BlankPerkButtons);
         BlankPerkButtons.Dispose();
@@ -31,6 +34,12 @@ public partial class UIManager : SystemBase
 
         Button GameOverContinue = root.Q<Button>("GameOverContinue");
         GameOverContinue.clicked += () => Continue();
+
+        Button GameOverGoToMainMenu = root.Q<Button>("GoToMainMenu");
+        GameOverGoToMainMenu.clicked += () => GoToMainMenu();
+
+        Button MainMenuStartGame = root.Q<Button>("StartGame");
+        MainMenuStartGame.clicked += () => StartGame();
 
         Button PerksAndCursesContinue = root.Q<Button>("PerksAndCursesContinue");
         PerksAndCursesContinue.clicked += () => Continue();
@@ -52,13 +61,23 @@ public partial class UIManager : SystemBase
     {
         VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
         ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        PlayerData PlayerInfo = SystemAPI.GetSingleton<PlayerData>();
+        ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
 
         switch (UIInfo.UIState)
         {
+            case UIStatus.MainMenu:
+                root.Q<VisualElement>("GameOver").visible = false;
+                root.Q<VisualElement>("MainMenu").visible = true;
+
+                PlayerInfo.SecondsUntilHoldMovement = root.Q<Slider>("HoldDelay").value;
+                PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
+                PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
+                PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
+                break;
+
             case UIStatus.Alive:
                 root.Q<VisualElement>("PerksAndCurses").visible = false;
-                root.Q<VisualElement>("GameOver").visible = false;
+                root.Q<VisualElement>("MainMenu").visible = false;
                 root.Q<VisualElement>("Stats").visible = true;
                 root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}";
                 root.Q<Label>("BiomeText").text = $"Biome: {UIInfo.BiomeName}";
@@ -139,12 +158,18 @@ public partial class UIManager : SystemBase
             PerkButton.PerkIndex = RandomIndex;
             PerkButton.CostToAdd = PerkArray.ElementAt(RandomIndex).Cost;
             PerkButton.Description = PerkArray.ElementAt(RandomIndex).Description;
+            PerkButton.VarToChange = PerkArray.ElementAt(RandomIndex).VarToChange;
+            PerkButton.AmountToChange = PerkArray.ElementAt(RandomIndex).AmountToChange;
+            PerkButton.SkillToSet = PerkArray.ElementAt(RandomIndex).SkillToSet;
         }
         else
         {
             PerkButton.PerkIndex = RandomIndex;
             PerkButton.CostToAdd = OneTimePerkArray.ElementAt(RandomIndex).Cost;
             PerkButton.Description = OneTimePerkArray.ElementAt(RandomIndex).Description;
+            PerkButton.VarToChange = OneTimePerkArray.ElementAt(RandomIndex).VarToChange;
+            PerkButton.AmountToChange = OneTimePerkArray.ElementAt(RandomIndex).AmountToChange;
+            PerkButton.SkillToSet = OneTimePerkArray.ElementAt(RandomIndex).SkillToSet;
             OneTimeIndicesChosen.Add(RandomIndex);
         }
     }
@@ -165,12 +190,18 @@ public partial class UIManager : SystemBase
             CurseButton.CurseIndex = RandomIndex;
             CurseButton.CostToRemove = CurseArray.ElementAt(RandomIndex).Cost;
             CurseButton.Description = CurseArray.ElementAt(RandomIndex).Description;
+            CurseButton.VarToChange = CurseArray.ElementAt(RandomIndex).VarToChange;
+            CurseButton.AmountToChange = CurseArray.ElementAt(RandomIndex).AmountToChange;
+            CurseButton.SkillToSet = CurseArray.ElementAt(RandomIndex).SkillToSet;
         }
         else
         {
             CurseButton.CurseIndex = RandomIndex;
             CurseButton.CostToRemove = OneTimeCurseArray.ElementAt(RandomIndex).Cost;
             CurseButton.Description = OneTimeCurseArray.ElementAt(RandomIndex).Description;
+            CurseButton.VarToChange = OneTimeCurseArray.ElementAt(RandomIndex).VarToChange;
+            CurseButton.AmountToChange = OneTimeCurseArray.ElementAt(RandomIndex).AmountToChange;
+            CurseButton.SkillToSet = OneTimeCurseArray.ElementAt(RandomIndex).SkillToSet;
             OneTimeIndicesChosen.Add(RandomIndex);
         }
     }
@@ -188,8 +219,134 @@ public partial class UIManager : SystemBase
             //code to deal with perks and curses here
 
             VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
+
             var CurseButtons = SystemAPI.GetSingletonBuffer<CurseButtonElement>();
+            var OneTimeCurseArray = SystemAPI.GetSingletonBuffer<OneTimeCurseElement>();
+            var CurseArray = SystemAPI.GetSingletonBuffer<CurseElement>();
+
             var PerkButtons = SystemAPI.GetSingletonBuffer<PerkButtonElement>();
+            var OneTimePerkArray = SystemAPI.GetSingletonBuffer<OneTimePerkElement>();
+            var PerkArray = SystemAPI.GetSingletonBuffer<PerkElement>();
+
+            ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+
+            for (int i = 0; i < PerkButtons.Length; i++)
+            {
+                if (!PerkButtons[i].Selected)
+                {
+                    continue;
+                }
+
+                if (PerkButtons[i].OneTimeUsePerk)
+                {
+                    OneTimePerkArray.ElementAt(PerkButtons[i].PerkIndex).Used = true;
+                }
+                else
+                {
+                    PerkArray.ElementAt(PerkButtons[i].PerkIndex).AmountOwned++;
+                }
+
+                switch (PerkButtons[i].VarToChange)
+                {
+                    case Change.DefaultHealth:
+                        PlayerInfo.DefaultVisibleStats.x += PerkButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultStamina:
+                        PlayerInfo.DefaultVisibleStats.y += PerkButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultTeleports:
+                        PlayerInfo.DefaultVisibleStats.z += PerkButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultStrength:
+                        PlayerInfo.DefaultVisibleStats.w += PerkButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultVision:
+                        PlayerInfo.DefaultHiddenStats.x += PerkButtons[i].AmountToChange;
+                        break;
+
+                    case Change.ChanceOfDangerousWarp:
+                        PlayerInfo.ChanceOfDangerousWarp += PerkButtons[i].AmountToChange;
+                        break;
+
+                    case Change.Skills:
+                        if (PerkButtons[i].AmountToChange == 1)
+                        {
+                            PlayerInfo.PlayerSkills |= PerkButtons[i].SkillToSet;
+                        }
+                        else if (PerkButtons[i].AmountToChange == -1)
+                        {
+                            PlayerInfo.PlayerSkills &= (~PerkButtons[i].SkillToSet);
+                        }
+                        else
+                        {
+                            Debug.Log("AmountToChange was not 1 nor -1 when expected... What happened?");
+                        }
+                        break;
+                }
+            }
+
+            for (int i = 0; i < CurseButtons.Length; i++)
+            {
+                if (!CurseButtons[i].Selected)
+                {
+                    continue;
+                }
+
+                if (CurseButtons[i].OneTimeUseCurse)
+                {
+                    OneTimeCurseArray.ElementAt(CurseButtons[i].CurseIndex).Used = true;
+                }
+                else
+                {
+                    CurseArray.ElementAt(CurseButtons[i].CurseIndex).AmountOwned++;
+                }
+
+                switch (CurseButtons[i].VarToChange)
+                {
+                    case Change.DefaultHealth:
+                        PlayerInfo.DefaultVisibleStats.x += CurseButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultStamina:
+                        PlayerInfo.DefaultVisibleStats.y += CurseButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultTeleports:
+                        PlayerInfo.DefaultVisibleStats.z += CurseButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultStrength:
+                        PlayerInfo.DefaultVisibleStats.w += CurseButtons[i].AmountToChange;
+                        break;
+
+                    case Change.DefaultVision:
+                        PlayerInfo.DefaultHiddenStats.x += CurseButtons[i].AmountToChange;
+                        break;
+
+                    case Change.ChanceOfDangerousWarp:
+                        PlayerInfo.ChanceOfDangerousWarp += CurseButtons[i].AmountToChange;
+                        break;
+
+                    case Change.Skills:
+                        if (CurseButtons[i].AmountToChange == 1)
+                        {
+                            PlayerInfo.PlayerSkills |= CurseButtons[i].SkillToSet;
+                        }
+                        else if (CurseButtons[i].AmountToChange == -1)
+                        {
+                            PlayerInfo.PlayerSkills &= (~CurseButtons[i].SkillToSet);
+                        }
+                        else
+                        {
+                            Debug.Log("AmountToChange was not 1 nor -1 when expected... What happened?");
+                        }
+                        break;
+                }
+            }
 
             CurseButtons.Clear(); //this part onwards should only happen after the perks and curses have been marked as used, and for the multiuse ones don't forget to just add 1 to number owned!
             PerkButtons.Clear();
@@ -233,29 +390,25 @@ public partial class UIManager : SystemBase
             root.Q<Button>("C5").style.backgroundColor = Color.grey;
             root.Q<Button>("C5").style.color = Color.black;
 
-            //reset game
-
-            //ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+            //restart game
             ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
-
             MapInfo.RestartGame = true;
-
-            ////EntityQuery ResetQuery = new EntityQueryBuilder(Allocator.Temp)
-            ////.WithAllRW<DestroyDuringReset>()
-            ////.Build(this);
-            ////EntityManager.DestroyEntity(ResetQuery);
-
-            ////MapInfo.Chunks.Clear();
-
-            //PlayerInfo.VisibleStats.x = 5;
-            //PlayerInfo.VisibleStats.y = 10;
-
-            //UIInfo.UIState = UIStatus.Alive;
-            //UIInfo.Setup = false;
-            //UIInfo.Cost = 1;
-
-            //MapInfo.RandomiseSeeds();
         }
+    }
+
+    public void GoToMainMenu()
+    {
+        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+        UIInfo.UIState = UIStatus.MainMenu;
+    }
+
+    public void StartGame()
+    {
+        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+        ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+
+        UIInfo.UIState = UIStatus.Alive;
+        MapInfo.RestartGame = true;
     }
 
     public void SelectPerkButton(int ButtonNum)
@@ -323,6 +476,9 @@ public struct PerkButtonElement : IBufferElementData
     public bool Selected;
     public int CostToAdd;
     public FixedString128Bytes Description;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 public struct CurseButtonElement : IBufferElementData
@@ -332,6 +488,9 @@ public struct CurseButtonElement : IBufferElementData
     public bool Selected;
     public int CostToRemove;
     public FixedString128Bytes Description;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 public enum UIStatus
@@ -339,6 +498,7 @@ public enum UIStatus
     Alive = 0,
     Dead = 1,
     PerksAndCurses = 2,
+    MainMenu = 3
 }
 
 /*
@@ -346,4 +506,16 @@ public enum UIStatus
  * 0 : alive, in game
  * 1 : dead, but has not continued
  * 2 : perk and curse screen
+ * 3 : main menu
  */
+
+public enum Change
+{
+    DefaultHealth,
+    DefaultStamina,
+    DefaultTeleports,
+    DefaultStrength,
+    DefaultVision,
+    ChanceOfDangerousWarp,
+    Skills
+}

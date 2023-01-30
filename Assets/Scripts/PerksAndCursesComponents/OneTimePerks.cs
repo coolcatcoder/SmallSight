@@ -23,7 +23,10 @@ public class OneTimePerksBaker : Baker<OneTimePerks>
                 {
                     Description = authoring.Perks[i].Description,
                     Cost = authoring.Perks[i].Cost,
-                    Used = false
+                    Used = false,
+                    VarToChange = authoring.Perks[i].VarToChange,
+                    AmountToChange = authoring.Perks[i].AmountToChange,
+                    SkillToSet = authoring.Perks[i].SkillToSet
                 });
             }
 
@@ -41,6 +44,9 @@ public struct OneTimePerkElement : IBufferElementData
     public FixedString128Bytes Description;
     public int Cost;
     public bool Used;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 [Serializable]
@@ -48,4 +54,7 @@ public struct OneTimePerk
 {
     public string Description;
     public int Cost;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }

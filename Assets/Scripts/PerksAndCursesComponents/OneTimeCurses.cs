@@ -23,7 +23,10 @@ public class OneTimeCursesBaker : Baker<OneTimeCurses>
                 {
                     Description = authoring.Curses[i].Description,
                     Cost = authoring.Curses[i].Cost,
-                    Used = false
+                    Used = false,
+                    VarToChange = authoring.Curses[i].VarToChange,
+                    AmountToChange = authoring.Curses[i].AmountToChange,
+                    SkillToSet = authoring.Curses[i].SkillToSet
                 });
             }
 
@@ -41,6 +44,9 @@ public struct OneTimeCurseElement : IBufferElementData
     public FixedString128Bytes Description;
     public int Cost;
     public bool Used;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 [Serializable]
@@ -48,4 +54,7 @@ public struct OneTimeCurse
 {
     public string Description;
     public int Cost;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }

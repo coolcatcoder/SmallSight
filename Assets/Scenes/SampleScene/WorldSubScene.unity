@@ -123,96 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &5313
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5314}
-  - component: {fileID: 5315}
-  m_Layer: 0
-  m_Name: Nonsense
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5314
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5313}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 50810603}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5315
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5313}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BiomeName: Nonsense
-  WorldIndex: 1
-  Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 10
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
-  ColourSpawn: {r: 0.24313726, g: 0.9254902, b: 0.3137255, a: 1}
-  MaxDistance: 0.6
---- !u!1 &50810602
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 50810603}
-  m_Layer: 0
-  m_Name: World1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &50810603
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 50810602}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1026795862}
-  - {fileID: 5314}
-  m_Father: {fileID: 0}
-  m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &225870192
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,12 +237,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Curses:
-  - Description: oh no
-    Cost: 5
-  - Description: such bads
-    Cost: 11
-  - Description: AAAAAAAAAAAAA
-    Cost: 2
+  - Description: Lose 2 stamina per step instead of 1.
+    Cost: 4
+    VarToChange: 6
+    AmountToChange: 1
+    SkillToSet: 4
 --- !u!114 &260470179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -346,18 +255,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MultiUseCurses:
-  - Description: glakgklagd
+  - Description: You will spawn with 5 less health.
     Cost: 1
-  - Description: whaaaaaaaaaaaa
+    VarToChange: 0
+    AmountToChange: -5
+    SkillToSet: 0
+  - Description: You will spawn with 5 less stamina.
     Cost: 1
-  - Description: nooooooooo
+    VarToChange: 1
+    AmountToChange: -5
+    SkillToSet: 0
+  - Description: You will spawn with 5 less teleports.
     Cost: 2
-  - Description: ahhhhhhhhhhh
-    Cost: 3
-  - Description: egggggggggggwr
-    Cost: 4
-  - Description: asdfas
-    Cost: 3
+    VarToChange: 2
+    AmountToChange: -5
+    SkillToSet: 0
+  - Description: You will spawn with 1 less strength.
+    Cost: 5
+    VarToChange: 3
+    AmountToChange: -1
+    SkillToSet: 0
+  - Description: You will spawn slightly more zoomed in.
+    Cost: 7
+    VarToChange: 4
+    AmountToChange: -1
+    SkillToSet: 0
+  - Description: Warps are slightly more likely to be dangerous.
+    Cost: 2
+    VarToChange: 5
+    AmountToChange: 5
+    SkillToSet: 0
 --- !u!114 &260470180
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -371,12 +298,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Perks:
-  - Description: yasyasyas
+  - Description: Find more nutrients in some plants. (listed in almanac)
     Cost: 10
-  - Description: such wow
+    VarToChange: 6
+    AmountToChange: 1
+    SkillToSet: 1
+  - Description: Velvet slicers won't harm you.
     Cost: 5
-  - Description: yummy
-    Cost: 3
+    VarToChange: 6
+    AmountToChange: 1
+    SkillToSet: 2
 --- !u!114 &260470181
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -390,20 +321,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MultiUsePerks:
-  - Description: Spawn with extra health.
+  - Description: You will spawn with 5 extra health.
     Cost: 1
-  - Description: something something
-    Cost: 3
-  - Description: adklfhasfh
-    Cost: 7
-  - Description: oih;jpkoj
+    VarToChange: 0
+    AmountToChange: 5
+    SkillToSet: 0
+  - Description: You will spawn with 5 extra stamina.
+    Cost: 1
+    VarToChange: 1
+    AmountToChange: 5
+    SkillToSet: 0
+  - Description: You will spawn with 5 extra teleports.
     Cost: 2
-  - Description: ytrtuert
+    VarToChange: 2
+    AmountToChange: 5
+    SkillToSet: 0
+  - Description: You will spawn with 1 extra strength.
     Cost: 5
-  - Description: ljljkjkjkjasddasdas
-    Cost: 1
-  - Description: cbnccc
+    VarToChange: 3
+    AmountToChange: 1
+    SkillToSet: 0
+  - Description: You will spawn slightly more zoomed out.
+    Cost: 7
+    VarToChange: 4
+    AmountToChange: 1
+    SkillToSet: 0
+  - Description: Warps are slightly more likely to not be dangerous.
     Cost: 2
+    VarToChange: 5
+    AmountToChange: -5
+    SkillToSet: 0
 --- !u!4 &260470182
 Transform:
   m_ObjectHideFlags: 0
@@ -686,6 +633,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7031560c226874c4e946099d19099f67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  WorldIndex: 0
 --- !u!114 &512553316
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -825,67 +773,6 @@ MonoBehaviour:
     Dangerous: 0
   - WorldIndex: 1
     Dangerous: 1
-  - WorldIndex: 2
-    Dangerous: 1
-  - WorldIndex: 3
-    Dangerous: 0
---- !u!1 &1026795860
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1026795862}
-  - component: {fileID: 1026795861}
-  m_Layer: 0
-  m_Name: Other Test
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1026795861
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1026795860}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BiomeName: AAAAAAAAAA
-  WorldIndex: 1
-  Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 97ee5b7649ca5a34e88a44f1e76ddc22,
-      type: 3}
-    PercentChanceToSpawn: 100
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
-  ColourSpawn: {r: 0.34901962, g: 0.3019608, b: 0.23529412, a: 1}
-  MaxDistance: 0.6
---- !u!4 &1026795862
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1026795860}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 50810603}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1092779323
 GameObject:
   m_ObjectHideFlags: 0
@@ -1013,6 +900,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1101053470}
   - component: {fileID: 1101053471}
+  - component: {fileID: 1101053472}
   m_Layer: 0
   m_Name: Nonsense
   m_TagString: Untagged
@@ -1048,7 +936,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BiomeName: Nonsense
-  WorldIndex: 2
+  WorldIndex: 1
   Features:
   - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
       type: 3}
@@ -1056,10 +944,29 @@ MonoBehaviour:
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
+      type: 3}
+    PercentChanceToSpawn: 100
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
   ExtraTerrainNoiseScale: 0
   TeleportSafe: 0
-  ColourSpawn: {r: 0.24313726, g: 0.9254902, b: 0.3137255, a: 1}
-  MaxDistance: 0.6
+  ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
+  MaxDistance: 0
+--- !u!114 &1101053472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1101053469}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7031560c226874c4e946099d19099f67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WorldIndex: 1
 --- !u!1 &1204818549
 GameObject:
   m_ObjectHideFlags: 0
@@ -1117,63 +1024,6 @@ Transform:
   m_Father: {fileID: 1092779324}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1256648347
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1256648348}
-  - component: {fileID: 1256648349}
-  m_Layer: 0
-  m_Name: Nonsense
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1256648348
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1256648347}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1703421151}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1256648349
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1256648347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BiomeName: Nonsense
-  WorldIndex: 3
-  Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 10
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
-  ColourSpawn: {r: 0.24313726, g: 0.9254902, b: 0.3137255, a: 1}
-  MaxDistance: 0.6
 --- !u!1 &1279627509
 GameObject:
   m_ObjectHideFlags: 0
@@ -1184,7 +1034,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1279627510}
   m_Layer: 0
-  m_Name: World2
+  m_Name: World1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1205,95 +1055,8 @@ Transform:
   - {fileID: 1898321486}
   - {fileID: 1101053470}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1309430410
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1309430411}
-  - component: {fileID: 1309430412}
-  m_Layer: 0
-  m_Name: Mountains
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1309430411
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309430410}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1703421151}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1309430412
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309430410}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BiomeName: Mountains?
-  WorldIndex: 3
-  Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 135a1ea4708e4114fa634469dcb8638c,
-      type: 3}
-    PercentChanceToSpawn: 30
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: a6337dcc232964b4db725809e7ddbc5b,
-      type: 3}
-    PercentChanceToSpawn: 5
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: d814a71baad9b5046a2664d195bbae75,
-      type: 3}
-    PercentChanceToSpawn: 5
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: b1acd28e6d3dd4d43bc1ea6a2440869d,
-      type: 3}
-    PercentChanceToSpawn: 5
-    IsTerrain: 0
-    MinNoiseValue: 0
-    MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
-    IsTerrain: 1
-    MinNoiseValue: 0
-    MaxNoiseValue: 0.2
-  - FeaturePrefab: {fileID: 866482175634483713, guid: cf5b33f6fe640d14f998a9c3982242bb,
-      type: 3}
-    PercentChanceToSpawn: 0
-    IsTerrain: 1
-    MinNoiseValue: 0.2
-    MaxNoiseValue: 1
-  ExtraTerrainNoiseScale: 0.5
-  TeleportSafe: 0
-  ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
-  MaxDistance: 0.6
 --- !u!1 &1420241587
 GameObject:
   m_ObjectHideFlags: 0
@@ -1437,39 +1200,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1092779324}
   m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1703421150
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1703421151}
-  m_Layer: 0
-  m_Name: World3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1703421151
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1703421150}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1309430411}
-  - {fileID: 1256648348}
-  m_Father: {fileID: 0}
-  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1745069042
 GameObject:
@@ -1626,7 +1356,7 @@ GameObject:
   - component: {fileID: 1898321486}
   - component: {fileID: 1898321487}
   m_Layer: 0
-  m_Name: Mountains
+  m_Name: Dry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1659,46 +1389,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BiomeName: Mountains Only
-  WorldIndex: 2
+  BiomeName: Dry River
+  WorldIndex: 1
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 29fa4a11647297947bea521425f3bd53,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 7433d848e8b04fc448c0aed2940d2512,
       type: 3}
-    PercentChanceToSpawn: 30
+    PercentChanceToSpawn: 3
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: a6337dcc232964b4db725809e7ddbc5b,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9cf2adf0f0686a44c8d2467c9430547e,
       type: 3}
-    PercentChanceToSpawn: 5
+    PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: d814a71baad9b5046a2664d195bbae75,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
       type: 3}
-    PercentChanceToSpawn: 5
+    PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 4465c08e7bb42f34c8be494a736bd38d,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
       type: 3}
-    PercentChanceToSpawn: 5
+    PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: bcb4440185164e644a317e29c94fcb9a,
       type: 3}
     PercentChanceToSpawn: 0
     IsTerrain: 1
-    MinNoiseValue: 0
-    MaxNoiseValue: 0.2
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
-    IsTerrain: 1
-    MinNoiseValue: 0.2
-    MaxNoiseValue: 1
-  ExtraTerrainNoiseScale: 0.5
+    MinNoiseValue: -1
+    MaxNoiseValue: -0.5
+  ExtraTerrainNoiseScale: -0.075
   TeleportSafe: 0
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
   MaxDistance: 0.6

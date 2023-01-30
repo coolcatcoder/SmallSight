@@ -42,9 +42,11 @@ public struct BlockData : IComponentData
     public SpecialBehaviour Behaviour;
 }
 
+[System.Flags]
 public enum SpecialBehaviour
 {
-    None,
-    Warp,
-    Replace
+    None = 0,
+    Warp = 1,
+    Replace = 2,
+    SkillStats = 4
 }
