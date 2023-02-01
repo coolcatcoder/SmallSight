@@ -192,6 +192,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
             UIInfo.UIState = UIStatus.Alive;
             UIInfo.Setup = false;
+
+            SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW.Position.xz = FindSafePos(ref state);
         }
 
         MovePlayer(ref state);
@@ -214,7 +216,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
     public void OnStopRunning(ref SystemState state)
     {
-
+        
     }
 
     public void OnDestroy(ref SystemState state)
@@ -258,6 +260,10 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             Pos = MapInfo.RandStruct.NextInt2(MapInfo.MinTeleportBounds, MapInfo.MaxTeleportBounds);
             GenerateBlock(Pos, ref MapInfo, ref state);
             if (MapInfo.GeneratedBlocks[Pos] == Entity.Null)
+            {
+                SafePos = true;
+            }
+            else if (SystemAPI.GetComponent<BlockData>(MapInfo.GeneratedBlocks[Pos]).TeleportSafe)
             {
                 SafePos = true;
             }
@@ -327,7 +333,16 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                     {
                         PlayerTransform.Position = NewPos;
 
-                        PlayerInfo.VisibleStats.y--;
+                        if (PlayerInfo.PlayerSkills.HasFlag(Skills.Exhausted))
+                        {
+                            PlayerInfo.VisibleStats.y -= 2;
+                        }
+                        else
+                        {
+                            PlayerInfo.VisibleStats.y--;
+                        }
+
+
                         if (PlayerInfo.VisibleStats.y < 0)
                         {
                             PlayerInfo.VisibleStats.x--;
@@ -347,6 +362,11 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                         BlockData BlockInfo = SystemAPI.GetComponent<BlockData>(BlockEntity);
                         if (PlayerInfo.VisibleStats.w >= BlockInfo.StrengthToWalkOn)
                         {
+                            if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.SkillToCross) && !(PlayerInfo.PlayerSkills.HasFlag(SystemAPI.GetComponent<SkillToCrossBehaviourData>(BlockEntity).Skill)))
+                            {
+                                return;
+                            }
+
                             if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.SkillStats))
                             {
                                 SkillStatsBehaviourData SkillStatsInfo = SystemAPI.GetComponent<SkillStatsBehaviourData>(BlockEntity);

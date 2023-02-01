@@ -9,6 +9,7 @@ public class Block : MonoBehaviour
 {
     public int StrengthToWalkOn;
     public bool ConsumeOnCollision = true;
+    public bool TeleportSafe = false;
 
     public float4 VisibleStatsChange;
     public float4 HiddenStatsChange;
@@ -26,7 +27,8 @@ public class BlockBaker : Baker<Block>
             VisibleStatsChange = authoring.VisibleStatsChange,
             HiddenStatsChange = authoring.HiddenStatsChange,
             ConsumeOnCollision = authoring.ConsumeOnCollision,
-            Behaviour = authoring.Behaviour
+            Behaviour = authoring.Behaviour,
+            TeleportSafe = authoring.TeleportSafe
         });
     }
 }
@@ -35,6 +37,7 @@ public struct BlockData : IComponentData
 {
     public int StrengthToWalkOn;
     public bool ConsumeOnCollision;
+    public bool TeleportSafe;
 
     public float4 VisibleStatsChange;
     public float4 HiddenStatsChange;
@@ -48,5 +51,6 @@ public enum SpecialBehaviour
     None = 0,
     Warp = 1,
     Replace = 2,
-    SkillStats = 4
+    SkillStats = 4,
+    SkillToCross = 8
 }

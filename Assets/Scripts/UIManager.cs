@@ -79,7 +79,7 @@ public partial class UIManager : SystemBase
                 root.Q<VisualElement>("PerksAndCurses").visible = false;
                 root.Q<VisualElement>("MainMenu").visible = false;
                 root.Q<VisualElement>("Stats").visible = true;
-                root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}";
+                root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}\nKarma: {PlayerInfo.HiddenStats.y}";
                 root.Q<Label>("BiomeText").text = $"Biome: {UIInfo.BiomeName}";
                 root.Q<Label>("BiomeText").style.color = UIInfo.BiomeColour;
                 break;
@@ -92,13 +92,16 @@ public partial class UIManager : SystemBase
             case UIStatus.PerksAndCurses:
                 root.Q<VisualElement>("GameOver").visible = false;
                 root.Q<VisualElement>("PerksAndCurses").visible = true;
-                root.Q<Label>("Cost").text = $"Total Cost: {math.clamp(UIInfo.Cost, 0, int.MaxValue)}";
+                //root.Q<Label>("Cost").text = $"Total Cost: {math.clamp(UIInfo.Cost, 0, int.MaxValue)}"; showing negatives should be fine, the user will understand
+                root.Q<Label>("Cost").text = $"Total Cost: {UIInfo.Cost}";
 
                 if (!UIInfo.Setup)
                 {
                     UIInfo.Setup = true;
 
                     //Debug.Log("I should do some setup probably...");
+
+                    UIInfo.Cost = (int)PlayerInfo.HiddenStats.y;
 
                     var PerkButtons = SystemAPI.GetSingletonBuffer<PerkButtonElement>();
                     var CurseButtons = SystemAPI.GetSingletonBuffer<CurseButtonElement>();

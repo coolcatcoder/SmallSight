@@ -7,8 +7,8 @@ using Unity.Collections;
 
 public class Player : MonoBehaviour
 {
-    public float4 DefaultVisibleStats;
-    public float4 DefaultHiddenStats;
+    public float4 DefaultVisibleStats; // health,stamina,teleports,strength
+    public float4 DefaultHiddenStats; // vision,karma,????,????
 
     public float SecondsUntilHoldMovement = 1f;
     public float HeldMovementDelay = 0.2f;
@@ -60,4 +60,7 @@ public enum Skills // info about bitwise and enums: https://www.alanzucconi.com/
     Botanist = 1,
     ThornWading = 2,
     Exhausted = 4,
+    Swimmer = 8,
+    Hunter = 16,
+    RockEater = 32
 }

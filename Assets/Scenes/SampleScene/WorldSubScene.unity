@@ -123,6 +123,40 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &60209080
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 60209081}
+  m_Layer: 0
+  m_Name: World2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &60209081
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 60209080}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1230604622}
+  - {fileID: 1458880698}
+  - {fileID: 812953167}
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &225870192
 GameObject:
   m_ObjectHideFlags: 0
@@ -186,7 +220,6 @@ MonoBehaviour:
     MinNoiseValue: 0.3
     MaxNoiseValue: 1
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.24673194, g: 0.14578143, b: 1, a: 0}
   MaxDistance: 0.4
 --- !u!4 &225870194
@@ -423,7 +456,6 @@ MonoBehaviour:
     MinNoiseValue: 0.1
     MaxNoiseValue: 1
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.7921569, g: 0.18806578, b: 0.14509802, a: 0}
   MaxDistance: 0.3
 --- !u!4 &267381093
@@ -498,7 +530,6 @@ MonoBehaviour:
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.7921569, g: 0.44173616, b: 0.14509802, a: 0}
   MaxDistance: 0.3
 --- !u!4 &302257961
@@ -585,7 +616,6 @@ MonoBehaviour:
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
   ExtraTerrainNoiseScale: 0.5
-  TeleportSafe: 0
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
   MaxDistance: 0.2
 --- !u!4 &404195484
@@ -674,7 +704,6 @@ MonoBehaviour:
     MinNoiseValue: 0
     MaxNoiseValue: 0
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 0}
   MaxDistance: 0
 --- !u!4 &512553317
@@ -755,7 +784,7 @@ MonoBehaviour:
   MinTeleportBounds:
     x: -6000
     y: -6000
-  WorldIndex: 0
+  WorldIndex: 1
 --- !u!114 &736213431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -772,7 +801,71 @@ MonoBehaviour:
   - WorldIndex: 0
     Dangerous: 0
   - WorldIndex: 1
+    Dangerous: 0
+  - WorldIndex: 2
     Dangerous: 1
+--- !u!1 &812953166
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 812953167}
+  - component: {fileID: 812953168}
+  m_Layer: 0
+  m_Name: Nonsense
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &812953167
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812953166}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 60209081}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &812953168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812953166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Nonsense
+  WorldIndex: 2
+  Features:
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
+      type: 3}
+    PercentChanceToSpawn: 10
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
+      type: 3}
+    PercentChanceToSpawn: 100
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  ExtraTerrainNoiseScale: 0
+  ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
+  MaxDistance: 0.3
 --- !u!1 &1092779323
 GameObject:
   m_ObjectHideFlags: 0
@@ -872,7 +965,6 @@ MonoBehaviour:
     MinNoiseValue: 0
     MaxNoiseValue: 0
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.4862745, g: 0.8745098, b: 0.47058824, a: 1}
   MaxDistance: 0.25
 --- !u!4 &1099466883
@@ -951,7 +1043,6 @@ MonoBehaviour:
     MinNoiseValue: 0
     MaxNoiseValue: 0
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
   MaxDistance: 0
 --- !u!114 &1101053472
@@ -1006,7 +1097,6 @@ MonoBehaviour:
     MinNoiseValue: 0
     MaxNoiseValue: 0
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.14901961, g: 0.6745098, b: 0.50980395, a: 1}
   MaxDistance: 0.15
 --- !u!4 &1204818552
@@ -1024,6 +1114,76 @@ Transform:
   m_Father: {fileID: 1092779324}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1230604621
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1230604622}
+  - component: {fileID: 1230604624}
+  - component: {fileID: 1230604623}
+  m_Layer: 0
+  m_Name: Ocean
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1230604622
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1230604621}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 60209081}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1230604623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1230604621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7031560c226874c4e946099d19099f67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WorldIndex: 2
+--- !u!114 &1230604624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1230604621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Ocean
+  WorldIndex: 2
+  Features:
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: bcb4440185164e644a317e29c94fcb9a,
+      type: 3}
+    PercentChanceToSpawn: 100
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  ExtraTerrainNoiseScale: 0
+  ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
+  MaxDistance: 0
 --- !u!1 &1279627509
 GameObject:
   m_ObjectHideFlags: 0
@@ -1108,7 +1268,6 @@ MonoBehaviour:
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
   ExtraTerrainNoiseScale: -0.1
-  TeleportSafe: 0
   ColourSpawn: {r: 0.8980392, g: 0.7294118, b: 0.65882355, a: 1}
   MaxDistance: 0.15
 --- !u!4 &1420241589
@@ -1126,6 +1285,80 @@ Transform:
   m_Father: {fileID: 1092779324}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1458880697
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1458880698}
+  - component: {fileID: 1458880699}
+  m_Layer: 0
+  m_Name: Island
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1458880698
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1458880697}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 60209081}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1458880699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1458880697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Island
+  WorldIndex: 2
+  Features:
+  - FeaturePrefab: {fileID: 866482175634483713, guid: ce9a844d098a12340b21749585bd63dc,
+      type: 3}
+    PercentChanceToSpawn: 20
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9cf2adf0f0686a44c8d2467c9430547e,
+      type: 3}
+    PercentChanceToSpawn: 2
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
+      type: 3}
+    PercentChanceToSpawn: 2
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
+      type: 3}
+    PercentChanceToSpawn: 100
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  ExtraTerrainNoiseScale: 0
+  ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
+  MaxDistance: 0.3
 --- !u!1 &1479998716
 GameObject:
   m_ObjectHideFlags: 0
@@ -1183,7 +1416,6 @@ MonoBehaviour:
     MinNoiseValue: 0.05
     MaxNoiseValue: 1
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.105882354, g: 0.76862746, b: 0.8392157, a: 1}
   MaxDistance: 0.3
 --- !u!4 &1479998718
@@ -1252,7 +1484,6 @@ MonoBehaviour:
     MinNoiseValue: 0
     MaxNoiseValue: 0
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.34901962, g: 0.3019608, b: 0.23529412, a: 1}
   MaxDistance: 0.2
 --- !u!4 &1745069044
@@ -1327,7 +1558,6 @@ MonoBehaviour:
     MinNoiseValue: 0
     MaxNoiseValue: 0.2
   ExtraTerrainNoiseScale: 0
-  TeleportSafe: 0
   ColourSpawn: {r: 0.10899236, g: 0.6698113, b: 0.091625154, a: 0}
   MaxDistance: 0.3
 --- !u!4 &1789524727
@@ -1423,7 +1653,6 @@ MonoBehaviour:
     MinNoiseValue: -1
     MaxNoiseValue: -0.5
   ExtraTerrainNoiseScale: -0.075
-  TeleportSafe: 0
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
   MaxDistance: 0.6
 --- !u!1 &2015128420

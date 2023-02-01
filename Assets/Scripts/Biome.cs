@@ -11,7 +11,6 @@ public class Biome : MonoBehaviour
     public int WorldIndex = 0;
     public BiomeAuthoringFeature[] Features;
     public float ExtraTerrainNoiseScale;
-    public bool TeleportSafe;
 
     public Color ColourSpawn;
     public float MaxDistance;
@@ -27,7 +26,6 @@ public class BiomeBaker : Baker<Biome>
             {
                 BiomeName = authoring.BiomeName,
                 ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
-                TeleportSafe = authoring.TeleportSafe,
                 ColourSpawn = authoring.ColourSpawn,
                 MaxDistance = authoring.MaxDistance,
                 WorldIndex = authoring.WorldIndex
@@ -55,7 +53,6 @@ public struct BiomeData : IComponentData
     public FixedString128Bytes BiomeName;
     public int WorldIndex;
     public float ExtraTerrainNoiseScale;
-    public bool TeleportSafe;
 
     public Color ColourSpawn;
     public float MaxDistance;
