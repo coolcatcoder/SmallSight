@@ -22,7 +22,8 @@ public class WorldsBaker : Baker<Worlds>
                 WorldBuffer.Add(new WorldData
                 {
                     WorldIndex = authoring.WorldElements[i].WorldIndex,
-                    Dangerous = authoring.WorldElements[i].Dangerous
+                    Dangerous = authoring.WorldElements[i].Dangerous,
+                    BackGround = authoring.WorldElements[i].BackGround
                 });
             }
         }
@@ -34,6 +35,7 @@ public struct WorldData : IBufferElementData
 {
     public int WorldIndex;
     public bool Dangerous;
+    public Color BackGround;
 }
 
 [System.Serializable]
@@ -41,4 +43,5 @@ public struct WorldElement
 {
     public int WorldIndex;
     public bool Dangerous;
+    public Color BackGround;
 }

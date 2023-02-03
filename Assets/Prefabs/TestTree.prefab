@@ -13,8 +13,9 @@ GameObject:
   - component: {fileID: 204732662716743343}
   - component: {fileID: 743825225219121971}
   - component: {fileID: 4386331956348317525}
+  - component: {fileID: 4947823550071360454}
   m_Layer: 0
-  m_Name: Bland
+  m_Name: TestTree
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 1862855503442099543}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -63,7 +64,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b2ac538714f95e24787f686a541f247c, type: 2}
+  - {fileID: 2100000, guid: 4d0b5775ce077bd4c9dd910fbd4c8c9c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -97,13 +98,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 306ce2361cfc3f149baebec788f3b749, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StrengthToWalkOn: 0
-  ConsumeOnCollision: 0
-  TeleportSafe: 1
-  YLevel: -2
+  StrengthToWalkOn: 1
+  ConsumeOnCollision: 1
+  TeleportSafe: 0
+  YLevel: 1
   VisibleStatsChange:
-    x: 0
-    y: 1
+    x: 1
+    y: 2
     z: 0
     w: 0
   HiddenStatsChange:
@@ -111,7 +112,7 @@ MonoBehaviour:
     y: 0
     z: 0
     w: 0
-  Behaviour: 0
+  Behaviour: 2
 --- !u!114 &4386331956348317525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,3 +125,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4947823550071360454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1862855503442099543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15d4008ea85e6064781759529d8c8a10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ReplacementBlock: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
+    type: 3}

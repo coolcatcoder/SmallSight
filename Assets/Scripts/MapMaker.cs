@@ -194,6 +194,10 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             UIInfo.Setup = false;
 
             SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW.Position.xz = FindSafePos(ref state);
+
+            ref WorldData WorldInfo = ref SystemAPI.GetSingletonBuffer<WorldData>().ElementAt(MapInfo.WorldIndex);
+            RenderSettings.skybox.SetColor("_GroundColor", WorldInfo.BackGround);
+            RenderSettings.skybox.SetColor("_SkyTint", WorldInfo.BackGround);
         }
 
         MovePlayer(ref state);
@@ -475,7 +479,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             {
                 IsTerrain = true;
                 BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
-                SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(Pos.x, -1, Pos.y);
+                SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, Pos.y);
             }
 
             //BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(BiomeEntity); this should not be required
@@ -488,7 +492,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                 if ((!BiomeFeatures[i].IsTerrain) && (MapInfo.RandStruct.NextFloat() < BiomeFeatures[i].PercentChanceToSpawn / 100))
                 {
                     BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
-                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(Pos.x, -1, Pos.y);
+                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, Pos.y);
 
                     break;
                 }
