@@ -753,6 +753,86 @@ Transform:
   m_Father: {fileID: 1092779324}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &709389270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 709389271}
+  - component: {fileID: 709389272}
+  m_Layer: 0
+  m_Name: Cactus Carnage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &709389271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709389270}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1279627510}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &709389272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709389270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BiomeName: Cactus Carnage
+  WorldIndex: 1
+  Features:
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: e099d1095cbfcde46b7a5408520aecb7,
+      type: 3}
+    PercentChanceToSpawn: 4
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
+      type: 3}
+    PercentChanceToSpawn: 2
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 7433d848e8b04fc448c0aed2940d2512,
+      type: 3}
+    PercentChanceToSpawn: 1
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9cf2adf0f0686a44c8d2467c9430547e,
+      type: 3}
+    PercentChanceToSpawn: 1
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
+      type: 3}
+    PercentChanceToSpawn: 100
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  ExtraTerrainNoiseScale: 0
+  ColourSpawn: {r: 0.091313645, g: 0.7169812, b: 0.67501736, a: 0}
+  MaxDistance: 0.3
 --- !u!1 &736213427
 GameObject:
   m_ObjectHideFlags: 0
@@ -838,10 +918,10 @@ MonoBehaviour:
     BackGround: {r: 0.85098046, g: 0.8431373, b: 0.6313726, a: 1}
   - WorldIndex: 2
     Dangerous: 1
-    BackGround: {r: 0, g: 0, b: 0, a: 0}
+    BackGround: {r: 0.052064814, g: 0.75598365, b: 0.8490566, a: 1}
   - WorldIndex: 3
     Dangerous: 1
-    BackGround: {r: 0, g: 0, b: 0, a: 0}
+    BackGround: {r: 0, g: 0, b: 0, a: 1}
 --- !u!1 &812953166
 GameObject:
   m_ObjectHideFlags: 0
@@ -916,7 +996,7 @@ GameObject:
   - component: {fileID: 932015618}
   - component: {fileID: 932015617}
   m_Layer: 0
-  m_Name: Ocean
+  m_Name: Mushroom Forest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -962,10 +1042,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9db4a1a1cb22db4e859c9ace5e822e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BiomeName: Ocean
+  BiomeName: Mushroom Forest
   WorldIndex: 3
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
       type: 3}
     PercentChanceToSpawn: 100
     IsTerrain: 0
@@ -1322,6 +1402,7 @@ Transform:
   m_Children:
   - {fileID: 1898321486}
   - {fileID: 1101053470}
+  - {fileID: 709389271}
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1694,7 +1775,7 @@ GameObject:
   - component: {fileID: 1898321486}
   - component: {fileID: 1898321487}
   m_Layer: 0
-  m_Name: Dry
+  m_Name: Dry River
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1750,7 +1831,7 @@ MonoBehaviour:
     MaxNoiseValue: 0
   - FeaturePrefab: {fileID: 1862855503442099543, guid: e099d1095cbfcde46b7a5408520aecb7,
       type: 3}
-    PercentChanceToSpawn: 2
+    PercentChanceToSpawn: 1
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
@@ -1768,7 +1849,7 @@ MonoBehaviour:
     MaxNoiseValue: -0.5
   ExtraTerrainNoiseScale: -0.075
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
-  MaxDistance: 0.6
+  MaxDistance: 0.3
 --- !u!1 &2015128420
 GameObject:
   m_ObjectHideFlags: 0
