@@ -394,6 +394,11 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
                             if (BlockInfo.ConsumeOnCollision && (!BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Replace)))
                             {
+                                if (BlockInfo.DecorationEntity != Entity.Null)
+                                {
+                                    state.EntityManager.DestroyEntity(BlockInfo.DecorationEntity);
+                                }
+
                                 state.EntityManager.DestroyEntity(BlockEntity);
                                 MapInfo.GeneratedBlocks[(int2)NewPos.xz] = Entity.Null;
                             }
@@ -422,7 +427,13 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                                 if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Replace))
                                 {
                                     Entity NewBlock = state.EntityManager.Instantiate(SystemAPI.GetComponent<ReplaceBehaviourData>(BlockEntity).ReplacementBlock);
-                                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(NewBlock, false).ValueRW.Position = new float3(NewPos.x, -1, NewPos.z);
+                                    BlockData NewBlockInfo = SystemAPI.GetComponent<BlockData>(NewBlock);
+                                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(NewBlock, false).ValueRW.Position = new float3(NewPos.x, NewBlockInfo.YLevel, NewPos.z);
+
+                                    if (BlockInfo.DecorationEntity != Entity.Null)
+                                    {
+                                        state.EntityManager.DestroyEntity(BlockInfo.DecorationEntity);
+                                    }
                                     state.EntityManager.DestroyEntity(BlockEntity);
                                     MapInfo.GeneratedBlocks[(int2)NewPos.xz] = NewBlock;
                                 }
@@ -480,6 +491,21 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                 IsTerrain = true;
                 BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
                 SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, Pos.y);
+
+                ref BlockData BlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BlockEntity, false).ValueRW;
+                if (BlockInfo.HasDecorations)
+                {
+                    var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
+                    if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
+                    {
+                        BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+
+                        DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
+                        float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+
+                        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(Pos.x + DecorationPos.x, DecorationInfo.YLevel, Pos.y + DecorationPos.y);
+                    }
+                }
             }
 
             //BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(BiomeEntity); this should not be required
@@ -493,6 +519,21 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                 {
                     BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
                     SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, Pos.y);
+
+                    ref BlockData BlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BlockEntity, false).ValueRW;
+                    if (BlockInfo.HasDecorations)
+                    {
+                        var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
+                        if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
+                        {
+                            BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+
+                            DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
+                            float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+
+                            SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(Pos.x + DecorationPos.x, DecorationInfo.YLevel, Pos.y + DecorationPos.y);
+                        }
+                    }
 
                     break;
                 }

@@ -800,7 +800,7 @@ MonoBehaviour:
   BiomeName: Cactus Carnage
   WorldIndex: 1
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: e099d1095cbfcde46b7a5408520aecb7,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 667bdaa5c39a2304e80b60dcf1f25a72,
       type: 3}
     PercentChanceToSpawn: 4
     IsTerrain: 0
@@ -896,7 +896,7 @@ MonoBehaviour:
   MinTeleportBounds:
     x: -6000
     y: -6000
-  WorldIndex: 1
+  WorldIndex: 3
 --- !u!114 &736213431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1045,7 +1045,13 @@ MonoBehaviour:
   BiomeName: Mushroom Forest
   WorldIndex: 3
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 4b00823cb0cf97349a117511312428cf,
+      type: 3}
+    PercentChanceToSpawn: 10
+    IsTerrain: 0
+    MinNoiseValue: 0
+    MaxNoiseValue: 0
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9ce8adef65661964fa42a6047d931155,
       type: 3}
     PercentChanceToSpawn: 100
     IsTerrain: 0
@@ -1829,7 +1835,7 @@ MonoBehaviour:
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: e099d1095cbfcde46b7a5408520aecb7,
+  - FeaturePrefab: {fileID: 1862855503442099543, guid: 667bdaa5c39a2304e80b60dcf1f25a72,
       type: 3}
     PercentChanceToSpawn: 1
     IsTerrain: 0
