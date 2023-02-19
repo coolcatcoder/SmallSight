@@ -198,6 +198,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             ref WorldData WorldInfo = ref SystemAPI.GetSingletonBuffer<WorldData>().ElementAt(MapInfo.WorldIndex);
             RenderSettings.skybox.SetColor("_GroundColor", WorldInfo.BackGround);
             RenderSettings.skybox.SetColor("_SkyTint", WorldInfo.BackGround);
+
+            SystemAPI.GetSingletonRW<PlayerData>().ValueRW.JustTeleported = true;
         }
 
         MovePlayer(ref state);
@@ -295,6 +297,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             PlayerTransform.Position.xz = FindSafePos(ref state);
 
             PlayerInfo.VisibleStats.z--;
+            PlayerInfo.JustTeleported = true;
         }
 
         if (InputInfo.Pressed || (InputInfo.Held && (InputInfo.TimeHeldFor >= PlayerInfo.SecondsUntilHoldMovement)))

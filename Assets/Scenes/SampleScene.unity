@@ -325,6 +325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GCam: {fileID: 330585543}
+  SmoothTime: 0.2
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

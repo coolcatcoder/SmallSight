@@ -51,6 +51,8 @@ public struct PlayerData : IComponentData
     public float MinInputDetected;
 
     public Skills PlayerSkills;
+
+    public bool JustTeleported;
 }
 
 [System.Flags]

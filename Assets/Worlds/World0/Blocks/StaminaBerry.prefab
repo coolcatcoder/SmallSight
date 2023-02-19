@@ -99,6 +99,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StrengthToWalkOn: 0
   ConsumeOnCollision: 1
+  TeleportSafe: 0
+  YLevel: -2
+  DecorationChance: 0
   VisibleStatsChange:
     x: 0
     y: 5
@@ -110,6 +113,7 @@ MonoBehaviour:
     z: 0
     w: 0
   Behaviour: 0
+  Decorations: []
 --- !u!114 &6369474741109966021
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -110,9 +110,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MinPos:
-    x: -0.5
-    y: -0.5
+    x: -0.2
+    y: -0.2
   MaxPos:
-    x: 0.5
-    y: 0.5
+    x: 0.2
+    y: 0.2
   YLevel: 1

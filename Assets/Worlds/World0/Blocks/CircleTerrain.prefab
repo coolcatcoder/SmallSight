@@ -101,6 +101,7 @@ MonoBehaviour:
   ConsumeOnCollision: 1
   TeleportSafe: 0
   YLevel: -1
+  DecorationChance: 0
   VisibleStatsChange:
     x: 0
     y: 0

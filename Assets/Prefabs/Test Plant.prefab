@@ -111,6 +111,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   StrengthToWalkOn: 0
   ConsumeOnCollision: 1
+  TeleportSafe: 0
+  YLevel: -2
+  DecorationChance: 0
   VisibleStatsChange:
     x: 0
     y: 0
@@ -122,3 +125,4 @@ MonoBehaviour:
     z: 0
     w: 0
   Behaviour: 1
+  Decorations: []

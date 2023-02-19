@@ -12,6 +12,9 @@ public class CameraSync : MonoBehaviour
     private Entity ECam;
     public GameObject GCam;
 
+    public float SmoothTime = 0.3f;
+    private Vector3 Velocity = Vector3.zero;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -42,7 +45,17 @@ public class CameraSync : MonoBehaviour
             GCam.GetComponent<Camera>().orthographicSize = PlayerInfo.HiddenStats.x;
 
             float3 CamPos = new float3(PlayerTransform.Position.x, 5, PlayerTransform.Position.z);
-            GCam.transform.position = CamPos;
+
+            if (PlayerInfo.JustTeleported)
+            {
+                PlayerInfo.JustTeleported = false;
+                World.DefaultGameObjectInjectionWorld.EntityManager.SetComponentData<PlayerData>(ECam, PlayerInfo);
+                GCam.transform.position = CamPos;
+            }
+            else
+            {
+                GCam.transform.position = Vector3.SmoothDamp(GCam.transform.position, CamPos, ref Velocity, SmoothTime);
+            }
         }
     }
 }
