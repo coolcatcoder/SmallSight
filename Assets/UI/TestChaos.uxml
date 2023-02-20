@@ -29,13 +29,21 @@
             <ui:Button text="Continue" display-tooltip-when-elided="true" name="GameOverContinue" style="width: 30%; left: 35%; position: relative; top: 30%;" />
             <ui:Button text="Main Menu" display-tooltip-when-elided="true" name="GoToMainMenu" style="width: 30%; left: 35%; position: relative; top: 30%;" />
         </ui:VisualElement>
-        <ui:VisualElement name="MainMenu" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: 50%;">
+        <ui:VisualElement name="MainMenu" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: 50%; visibility: visible;">
             <ui:Label tabindex="-1" text="SmallSight" display-tooltip-when-elided="true" style="font-size: 50px; color: rgb(57, 9, 149); -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(233, 30, 196);" />
             <ui:Slider picking-mode="Ignore" label="Delay Until Hold Movement" value="0.25" high-value="100" focusable="true" show-input-field="true" name="HoldDelay" />
             <ui:Slider picking-mode="Ignore" label="Delay Between Movement While Holding" value="0.1" high-value="100" focusable="true" show-input-field="true" name="DelayBetween" />
             <ui:Slider picking-mode="Ignore" label="Min Input Detected" value="1" high-value="100" focusable="true" show-input-field="true" name="MinInputDetected" />
             <ui:SliderInt picking-mode="Ignore" label="Render Distance" value="5" high-value="100" show-input-field="true" name="RenderDistance" low-value="1" direction="Horizontal" />
             <ui:Button text="Start Adventure!" display-tooltip-when-elided="true" name="StartGame" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Almanac" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; height: 50%; left: auto; align-items: center; align-self: auto; justify-content: flex-start; bottom: 50%; visibility: hidden;">
+            <ui:Label tabindex="-1" text="Some lonasdfasfasfasasdasfasdfasfasfasfasfasfdasfasffffffffffffffffffffffffffffffffffffasdfg rambling paragraph... adhoahifhdahiofiohashifohiasoidhfiohihasdihfihasdhifhiashifhiashidfhialdksflkaslasdflakfkaslkflkalsdfklalskfklasflalksdfkl;asklklfakl;sdklfasklfsklafklasklaskllkkf" display-tooltip-when-elided="true" name="MainParagraph" style="width: 50%; white-space: normal; height: 100%; background-color: rgb(43, 173, 188);" />
+            <ui:VisualElement name="PageMovers" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; flex-direction: row;">
+                <ui:Button text="&lt;" display-tooltip-when-elided="true" name="PreviousPage" />
+                <ui:IntegerField label="page number:" value="1" name="PageNum" style="height: auto; text-overflow: clip; -unity-text-align: upper-center; -unity-text-outline-color: rgb(57, 127, 142); -unity-text-outline-width: 0; overflow: visible;" />
+                <ui:Button text="&gt;" display-tooltip-when-elided="true" name="NextPage" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
