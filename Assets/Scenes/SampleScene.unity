@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028334, g: 0.2257134, b: 0.30692226, a: 1}
+  m_IndirectSpecularColor: {r: 0.05559106, g: 0.08086522, b: 0.12897171, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -187,7 +187,6 @@ GameObject:
   - component: {fileID: 248503512}
   - component: {fileID: 248503511}
   - component: {fileID: 248503513}
-  - component: {fileID: 248503514}
   m_Layer: 0
   m_Name: ChaosStuff
   m_TagString: Untagged
@@ -223,7 +222,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 248503513}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PlayerInputThrower, Assembly-CSharp
         m_MethodName: Move
         m_Mode: 0
@@ -237,14 +236,6 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 83513242-90be-4347-9afb-1e2e85086518
     m_ActionName: Player/Move[/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 51dca30b-0c0f-416c-b562-232972da7c28
-    m_ActionName: Player/Look[/Mouse/delta]
-  - m_PersistentCalls:
-      m_Calls: []
-    m_ActionId: 63ffc4f6-201a-4345-add6-a860636db7fc
-    m_ActionName: Player/Fire[/Mouse/leftButton]
   - m_PersistentCalls:
       m_Calls: []
     m_ActionId: 56eca4c1-a0b6-4b23-b2c8-30b2e51f48bf
@@ -287,20 +278,20 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 248503513}
-        m_TargetAssemblyTypeName: PlayerInputThrower, Assembly-CSharp
-        m_MethodName: Restart
-        m_Mode: 0
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-    m_ActionId: a4d686a6-6fac-4fa4-9fa1-6cb226131174
-    m_ActionName: Player/Restart[/Keyboard/r]
+    m_ActionId: eb6c5261-1c2c-46d9-837d-0b2930fa2fed
+    m_ActionName: Player/Teleport[/Keyboard/f]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -330,22 +321,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 248503510}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17150ea019bdd6842a960a2a71ee750a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &248503514
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248503510}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92994712659f9704eb4f312b67a8e1e7, type: 3}
+  m_Script: {fileID: 11500000, guid: 903616cf9a0de9047b81cefdf4cc5e76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   GCam: {fileID: 330585543}
+  SmoothTime: 0.2
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -408,7 +388,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 0.7
+  orthographic size: 1
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -475,6 +455,13 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
+  m_TaaSettings:
+    quality: 3
+    frameInfluence: 0.1
+    jitterScale: 1
+    mipBias: 0
+    varianceClampScale: 0.9
+    contrastAdaptiveSharpening: 0
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -582,7 +569,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Version: 2
+  m_Version: 3
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
   m_LightLayerMask: 1
@@ -592,7 +579,7 @@ MonoBehaviour:
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 1
+  m_SoftShadowQuality: 2
 --- !u!1 &668927470
 GameObject:
   m_ObjectHideFlags: 0

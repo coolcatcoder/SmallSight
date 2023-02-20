@@ -21,9 +21,12 @@ public class CursesBaker : Baker<Curses>
             {
                 FeatureBuffer.Add(new CurseElement
                 {
-                    Description = new NativeText(authoring.MultiUseCurses[i].Description, Allocator.Persistent),
+                    Description = authoring.MultiUseCurses[i].Description,
                     Cost = authoring.MultiUseCurses[i].Cost,
-                    AmountOwned = false
+                    AmountOwned = 0,
+                    VarToChange = authoring.MultiUseCurses[i].VarToChange,
+                    AmountToChange = authoring.MultiUseCurses[i].AmountToChange,
+                    SkillToSet = authoring.MultiUseCurses[i].SkillToSet
                 });
             }
 
@@ -38,9 +41,12 @@ public class CursesBaker : Baker<Curses>
 [InternalBufferCapacity(0)]
 public struct CurseElement : IBufferElementData
 {
-    public NativeText Description;
+    public FixedString128Bytes Description;
     public int Cost;
-    public bool AmountOwned;
+    public int AmountOwned;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 [Serializable]
@@ -48,4 +54,7 @@ public struct Curse
 {
     public string Description;
     public int Cost;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }

@@ -21,9 +21,12 @@ public class OneTimePerksBaker : Baker<OneTimePerks>
             {
                 FeatureBuffer.Add(new OneTimePerkElement
                 {
-                    Description = new NativeText(authoring.Perks[i].Description, Allocator.Persistent),
+                    Description = authoring.Perks[i].Description,
                     Cost = authoring.Perks[i].Cost,
-                    Used = false
+                    Used = false,
+                    VarToChange = authoring.Perks[i].VarToChange,
+                    AmountToChange = authoring.Perks[i].AmountToChange,
+                    SkillToSet = authoring.Perks[i].SkillToSet
                 });
             }
 
@@ -38,9 +41,12 @@ public class OneTimePerksBaker : Baker<OneTimePerks>
 [InternalBufferCapacity(0)]
 public struct OneTimePerkElement : IBufferElementData
 {
-    public NativeText Description;
+    public FixedString128Bytes Description;
     public int Cost;
     public bool Used;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 [Serializable]
@@ -48,4 +54,7 @@ public struct OneTimePerk
 {
     public string Description;
     public int Cost;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }

@@ -21,9 +21,12 @@ public class PerksBaker : Baker<Perks>
             {
                 FeatureBuffer.Add(new PerkElement
                 {
-                    Description = new NativeText(authoring.MultiUsePerks[i].Description, Allocator.Persistent),
+                    Description = authoring.MultiUsePerks[i].Description,
                     Cost = authoring.MultiUsePerks[i].Cost,
-                    AmountOwned = false
+                    AmountOwned = 0,
+                    VarToChange = authoring.MultiUsePerks[i].VarToChange,
+                    AmountToChange = authoring.MultiUsePerks[i].AmountToChange,
+                    SkillToSet = authoring.MultiUsePerks[i].SkillToSet
                 });
             }
 
@@ -38,9 +41,12 @@ public class PerksBaker : Baker<Perks>
 [InternalBufferCapacity(0)]
 public struct PerkElement : IBufferElementData
 {
-    public NativeText Description;
+    public FixedString128Bytes Description;
     public int Cost;
-    public bool AmountOwned;
+    public int AmountOwned;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
 
 [Serializable]
@@ -48,4 +54,7 @@ public struct Perk
 {
     public string Description;
     public int Cost;
+    public Change VarToChange;
+    public float AmountToChange;
+    public Skills SkillToSet;
 }
