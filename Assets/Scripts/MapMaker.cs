@@ -47,6 +47,8 @@ public class MapMakerBaker : Baker<MapMaker>
 public struct MapData : IComponentData
 {
     public NativeHashMap<int2, Entity> GeneratedBlocks;
+    public NativeHashMap<int3, Entity> GeneratedBlocks3D;
+
     public int MaxBlocks;
 
     public uint Seed;
@@ -69,6 +71,11 @@ public struct MapData : IComponentData
     public bool KeepStats;
 
     public int WorldIndex;
+
+    public bool Is3D;
+    public float Quality;
+
+    public EntityQuery ResetQuery;
 }
 
 [ChunkSerializable]
@@ -154,8 +161,13 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
 
         MapInfo.GeneratedBlocks = new NativeHashMap<int2, Entity>(MapInfo.MaxBlocks, Allocator.Persistent);
+        MapInfo.GeneratedBlocks3D = new NativeHashMap<int3, Entity>(MapInfo.MaxBlocks, Allocator.Persistent); // not a memory wise decision, this causes way more memory to be used than it should...
 
         MapInfo.RandomiseSeeds();
+
+        MapInfo.ResetQuery = new EntityQueryBuilder(Allocator.Temp)
+                .WithAllRW<DestroyOnRestartData>()
+                .Build(ref state);
 
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         PlayerInfo.VisibleStats = PlayerInfo.DefaultVisibleStats;
@@ -172,11 +184,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             MapInfo.RandomiseSeeds();
             MapInfo.GeneratedBlocks.Clear();
 
-            EntityQuery ResetQuery = new EntityQueryBuilder(Allocator.Temp)
-                .WithAllRW<DestroyOnRestartData>()
-                .Build(ref state); //save this in the MapData during Oncreate()
-
-            state.EntityManager.DestroyEntity(ResetQuery);
+            state.EntityManager.DestroyEntity(MapInfo.ResetQuery);
 
             if (!MapInfo.KeepStats)
             {

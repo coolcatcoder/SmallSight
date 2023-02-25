@@ -12,6 +12,7 @@ public partial class UIManager : SystemBase
     protected override void OnCreate()
     {
         RequireForUpdate<PlayerData>();
+        //RequireForUpdate<MapData>(); impossible
     }
 
     protected override void OnStartRunning()
@@ -73,6 +74,36 @@ public partial class UIManager : SystemBase
                 PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
                 PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
                 PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
+
+                bool Toggle3DValue = root.Q<Toggle>("3DToggle").value;
+
+                if (SystemAPI.HasSingleton<MapData>())
+                {
+                    ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+
+                    MapInfo.Quality = root.Q<Slider>("Quality").value;
+
+                    if (Toggle3DValue != MapInfo.Is3D)
+                    {
+                        MapInfo.Is3D = Toggle3DValue;
+
+                        if (MapInfo.Is3D)
+                        {
+                            Debug.Log("Getting rid of the old 2d stuff!");
+
+                            MapInfo.RandomiseSeeds();
+                            MapInfo.GeneratedBlocks.Clear();
+
+                            EntityManager.DestroyEntity(MapInfo.ResetQuery);
+                        }
+                        else
+                        {
+                            Debug.Log("Getting rid of the old 3d stuff!");
+                        }
+                    
+                    }
+                }
+
                 break;
 
             case UIStatus.Alive:
