@@ -956,10 +956,13 @@ MonoBehaviour:
   MaxTeleportBounds:
     x: 6000
     y: 6000
+    z: 6000
   MinTeleportBounds:
     x: -6000
     y: -6000
+    z: -6000
   WorldIndex: 0
+  BlockBatchSize: 32
 --- !u!114 &736213431
 MonoBehaviour:
   m_ObjectHideFlags: 0
