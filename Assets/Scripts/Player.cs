@@ -53,6 +53,8 @@ public struct PlayerData : IComponentData
     public Skills PlayerSkills;
 
     public bool JustTeleported;
+
+    public float CameraSensitivity;
 }
 
 [System.Flags]
