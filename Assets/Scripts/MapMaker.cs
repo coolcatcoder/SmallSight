@@ -286,6 +286,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         //GenerateBlock((int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz, ref SystemAPI.GetSingletonRW<MapData>().ValueRW, ref state);
 
         PlayerData PlayerInfo = SystemAPI.GetSingleton<PlayerData>();
+        int2 PlayerPos = (int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz;
 
         int BlocksToSearch = PlayerInfo.GenerationThickness * PlayerInfo.GenerationThickness;
 
@@ -295,7 +296,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         {
             Blocks = BlocksToGenerate.AsParallelWriter(),
             GeneratedBlocks = MapInfo.GeneratedBlocks2D,
-            GenerationPos = (int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz,
+            GenerationPos = PlayerPos,
             GenerationThickness = PlayerInfo.GenerationThickness
         };
 
@@ -311,16 +312,22 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             GenerateBlock2D(BlocksToGenerate[i], ref MapInfo, ref state);
         }
 
-        //for (int x = -PlayerInfo.GenerationThickness; x <= PlayerInfo.GenerationThickness; x++)
-        //{
-        //    for (int z = -PlayerInfo.GenerationThickness; z <= PlayerInfo.GenerationThickness; z++)
-        //    {
-        //        int2 WorldPos = (int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz;
-        //        WorldPos.x += x;
-        //        WorldPos.y += z;
-        //        GenerateBlock(WorldPos, ref SystemAPI.GetSingletonRW<MapData>().ValueRW, ref state);
-        //    }
-        //}
+        if (BlocksToGenerate.Length == 0)
+        {
+            for (int i = 0; i < PlayerInfo.RandomsPerFrame; i++)
+            {
+                BlockGenerator2D RandBlock = new()
+                {
+                    Pos = MapInfo.RandStruct.NextInt2(PlayerPos - new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance), PlayerPos + new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance))
+                };
+
+                if (!MapInfo.GeneratedBlocks2D.ContainsKey(RandBlock.Pos))
+                {
+                    RandBlock.BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(RandBlock.Pos), ref state);
+                    GenerateBlock2D(RandBlock, ref MapInfo, ref state);
+                }
+            }
+        }
 
         BlocksToGenerate.Dispose();
     }

@@ -45,6 +45,8 @@ public struct PlayerData : IComponentData
     public float HeldMovementDelay;
 
     public int GenerationThickness;
+    public int RandomDistance;
+    public int RandomsPerFrame;
 
     public float ChanceOfDangerousWarp;
 
