@@ -23,6 +23,8 @@ public partial class UIManager : SystemBase
         ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
         UIInfo.UIState = UIStatus.MainMenu;
 
+        //ActiveMenus = new NativeList<Menu>(20, Allocator.Persistent);
+
         var BlankPerkButtons = new NativeArray<PerkButtonElement>(5, Allocator.Temp);
         EntityManager.AddBuffer<PerkButtonElement>(UIEntity).AddRange(BlankPerkButtons);
         BlankPerkButtons.Dispose();
@@ -36,17 +38,17 @@ public partial class UIManager : SystemBase
         Button GameOverContinue = root.Q<Button>("GameOverContinue");
         GameOverContinue.clicked += () => Continue();
 
-        Button GameOverGoToMainMenu = root.Q<Button>("GoToMainMenu");
-        GameOverGoToMainMenu.clicked += () => GoToMainMenuGameOver();
+        root.Q<Button>("GoToMainMenu").clicked += () => OpenMenu(UIStatus.MainMenuGameOver);
 
-        Button MainMenuStartGame = root.Q<Button>("StartGame");
-        MainMenuStartGame.clicked += () => StartGame();
+        root.Q<Button>("StartGame").clicked += () => StartGame();
 
-        Button MainMenuContinue = root.Q<Button>("MainMenuContinue");
-        MainMenuContinue.clicked += () => MainMenuToPerksAndCurses();
+        root.Q<Button>("MainMenuContinue").clicked += () => OpenMenu(UIStatus.Dead); //MainMenuToPerksAndCurses();
 
-        //root.Q<Button>("MainMenuAlmanac").clicked += () => OpenAlmanacDead();
-        //root.Q<Button>("")
+        root.Q<Button>("StatsAlmanac").clicked += () => OpenMenu(UIStatus.Almanac);
+        root.Q<Button>("GameOverAlmanac").clicked += () => OpenMenu(UIStatus.AlmanacDead);
+
+        root.Q<Button>("SettingsBack").clicked += () => OpenMenu(UIStatus.MainMenu);
+        root.Q<Button>("ChangeSettings").clicked += () => OpenMenu(UIStatus.Settings);
 
         Button PerksAndCursesContinue = root.Q<Button>("PerksAndCursesContinue");
         PerksAndCursesContinue.clicked += () => Continue();
@@ -62,6 +64,14 @@ public partial class UIManager : SystemBase
         root.Q<Button>("C3").clicked += () => SelectCurseButton(3);
         root.Q<Button>("C4").clicked += () => SelectCurseButton(4);
         root.Q<Button>("C5").clicked += () => SelectCurseButton(5);
+
+        root.Q<EnumField>("OptimisationStrategy").Init(Optimisation.None);
+        root.Q<EnumField>("DebugFeatures").Init(DebugFeatures.None);
+        root.Q<EnumField>("WorldDropDown").Init(AlmanacWorld.World0);
+
+        root.Q<Button>("NextPage").clicked += () => TurnPage(1, root);
+        root.Q<Button>("PreviousPage").clicked += () => TurnPage(-1, root);
+
     }
 
     protected override void OnUpdate()
@@ -73,127 +83,84 @@ public partial class UIManager : SystemBase
         switch (UIInfo.UIState)
         {
             case UIStatus.MainMenu:
-                root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
-                root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.Flex;
-
-                PlayerInfo.SecondsUntilHoldMovement = root.Q<Slider>("HoldDelay").value;
-                PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
-                PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
-                PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
-                PlayerInfo.CameraSensitivity = root.Q<Slider>("Sensitivity").value;
-
-                bool Toggle3DValue = root.Q<Toggle>("3DToggle").value;
-
-                if (SystemAPI.HasSingleton<MapData>())
+                if (!UIInfo.Setup)
                 {
-                    ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
-
-                    MapInfo.Quality = root.Q<Slider>("Quality").value;
-
-                    if (Toggle3DValue != MapInfo.Is3D)
-                    {
-                        MapInfo.Is3D = Toggle3DValue;
-
-                        if (MapInfo.Is3D)
-                        {
-                            Debug.Log("Getting rid of the old 2d stuff!");
-
-                            MapInfo.RandomiseSeeds();
-                            MapInfo.GeneratedBlocks2D.Clear();
-
-                            EntityManager.DestroyEntity(MapInfo.ResetQuery);
-                        }
-                        else
-                        {
-                            Debug.Log("Getting rid of the old 3d stuff!");
-
-                            MapInfo.RandomiseSeeds();
-                            MapInfo.GeneratedBlocks3D.Clear();
-
-                            EntityManager.DestroyEntity(MapInfo.ResetQuery);
-                        }
-                    
-                    }
+                    MainMenuSetup(root, ref PlayerInfo);
+                    UIInfo.Setup = true;
                 }
-
+                //MainMenuUpdate(root, ref PlayerInfo);
                 break;
 
             case UIStatus.Alive:
-                root.Q<VisualElement>("PerksAndCurses").style.display = DisplayStyle.None;
-                root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
-                root.Q<VisualElement>("Stats").style.display = DisplayStyle.Flex;
-                root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}\nKarma: {PlayerInfo.HiddenStats.y}";
-                root.Q<Label>("BiomeText").text = $"Biome: {UIInfo.BiomeName}";
-                root.Q<Label>("BiomeText").style.color = UIInfo.BiomeColour;
+                if (!UIInfo.Setup)
+                {
+                    AliveMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                AliveMenuUpdate(root, ref PlayerInfo, ref UIInfo);
                 break;
 
             case UIStatus.Dead:
-                root.Q<VisualElement>("Stats").style.display = DisplayStyle.None;
-                root.Q<VisualElement>("GameOver").style.display = DisplayStyle.Flex;
+                if (!UIInfo.Setup)
+                {
+                    DeadMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                //DeadMenuUpdate(root, ref PlayerInfo);
                 break;
 
             case UIStatus.PerksAndCurses:
-                root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
-                root.Q<VisualElement>("PerksAndCurses").style.display = DisplayStyle.Flex;
-                //root.Q<Label>("Cost").text = $"Total Cost: {math.clamp(UIInfo.Cost, 0, int.MaxValue)}"; showing negatives should be fine, the user will understand
-                root.Q<Label>("Cost").text = $"Total Cost: {UIInfo.Cost}";
-
                 if (!UIInfo.Setup)
                 {
+                    PerksAndCursesMenuSetup(root, ref PlayerInfo, ref UIInfo);
                     UIInfo.Setup = true;
-
-                    //Debug.Log("I should do some setup probably...");
-
-                    UIInfo.Cost = (int)PlayerInfo.HiddenStats.y;
-
-                    var PerkButtons = SystemAPI.GetSingletonBuffer<PerkButtonElement>();
-                    var CurseButtons = SystemAPI.GetSingletonBuffer<CurseButtonElement>();
-                    var OneTimeIndicesChosen = new NativeList<int>(Allocator.Temp);
-
-                    RandomisePerk(ref PerkButtons.ElementAt(0), OneTimeIndicesChosen);
-                    root.Q<Button>("P1").text = $"{PerkButtons[0].Description} Cost: {PerkButtons[0].CostToAdd}";
-
-                    RandomisePerk(ref PerkButtons.ElementAt(1), OneTimeIndicesChosen);
-                    root.Q<Button>("P2").text = $"{PerkButtons[1].Description} Cost: {PerkButtons[1].CostToAdd}";
-
-                    RandomisePerk(ref PerkButtons.ElementAt(2), OneTimeIndicesChosen);
-                    root.Q<Button>("P3").text = $"{PerkButtons[2].Description} Cost: {PerkButtons[2].CostToAdd}";
-
-                    RandomisePerk(ref PerkButtons.ElementAt(3), OneTimeIndicesChosen);
-                    root.Q<Button>("P4").text = $"{PerkButtons[3].Description} Cost: {PerkButtons[3].CostToAdd}";
-
-                    RandomisePerk(ref PerkButtons.ElementAt(4), OneTimeIndicesChosen);
-                    root.Q<Button>("P5").text = $"{PerkButtons[4].Description} Cost: {PerkButtons[4].CostToAdd}";
-
-                    OneTimeIndicesChosen.Clear();
-
-                    RandomiseCurse(ref CurseButtons.ElementAt(0), OneTimeIndicesChosen);
-                    root.Q<Button>("C1").text = $"{CurseButtons[0].Description} Cost: {CurseButtons[0].CostToRemove}";
-
-                    RandomiseCurse(ref CurseButtons.ElementAt(1), OneTimeIndicesChosen);
-                    root.Q<Button>("C2").text = $"{CurseButtons[1].Description} Cost: {CurseButtons[1].CostToRemove}";
-
-                    RandomiseCurse(ref CurseButtons.ElementAt(2), OneTimeIndicesChosen);
-                    root.Q<Button>("C3").text = $"{CurseButtons[2].Description} Cost: {CurseButtons[2].CostToRemove}";
-
-                    RandomiseCurse(ref CurseButtons.ElementAt(3), OneTimeIndicesChosen);
-                    root.Q<Button>("C4").text = $"{CurseButtons[3].Description} Cost: {CurseButtons[3].CostToRemove}";
-
-                    RandomiseCurse(ref CurseButtons.ElementAt(4), OneTimeIndicesChosen);
-                    root.Q<Button>("C5").text = $"{CurseButtons[4].Description} Cost: {CurseButtons[4].CostToRemove}";
-
-                    OneTimeIndicesChosen.Dispose();
                 }
+                PerksAndCursesMenuUpdate(root, ref UIInfo);
+                
+                //root.Q<Label>("Cost").text = $"Total Cost: {math.clamp(UIInfo.Cost, 0, int.MaxValue)}"; showing negatives should be fine, the user will understand
                 break;
 
             case UIStatus.MainMenuGameOver:
-                PlayerInfo.SecondsUntilHoldMovement = root.Q<Slider>("HoldDelay").value;
-                PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
-                PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
-                PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
-                PlayerInfo.CameraSensitivity = root.Q<Slider>("Sensitivity").value;
+                if (!UIInfo.Setup)
+                {
+                    DeadMainMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                //DeadMainMenuUpdate(root, ref PlayerInfo);
+                break;
+
+            case UIStatus.Almanac:
+                if (!UIInfo.Setup)
+                {
+                    AlmanacMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                //AlmanacMenuUpdate(root, ref PlayerInfo);
+                break;
+
+            case UIStatus.AlmanacDead:
+                if (!UIInfo.Setup)
+                {
+                    DeadAlmanacMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                //DeadAlmanacMenuUpdate(root, ref PlayerInfo);
+                break;
+
+            case UIStatus.Settings:
+                if (!UIInfo.Setup)
+                {
+                    SettingsMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                SettingsMenuUpdate(root, ref PlayerInfo);
                 break;
         }
+    }
+
+    protected override void OnDestroy()
+    {
+        //ActiveMenus.Dispose();
     }
 
     public void RandomisePerk(ref PerkButtonElement PerkButton, NativeList<int> OneTimeIndicesChosen)
@@ -259,6 +226,284 @@ public partial class UIManager : SystemBase
             OneTimeIndicesChosen.Add(RandomIndex);
         }
     }
+
+    #region Menus
+
+    public void OpenMenu(UIStatus MenuToOpen)
+    {
+        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+        UIInfo.UIState = MenuToOpen;
+    }
+
+    #region EmptyMenu
+
+    public void EmptyMenuSetup(VisualElement root)
+    {
+
+    }
+
+    public void EmptyMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
+    {
+
+    }
+
+    public void EmptyMenuOpen()
+    {
+
+    }
+
+    #endregion
+
+    #region MainMenu
+
+    public void MainMenuSetup(VisualElement root, ref PlayerData PlayerInfo)
+    {
+        root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("Settings").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.Flex;
+        SettingsMenuUpdate(root, ref PlayerInfo); // lazy...
+    }
+
+    public void MainMenuUpdate(VisualElement root, ref PlayerData PlayerInfo)
+    {
+
+    }
+
+    #endregion
+
+    #region DeadMainMenu
+
+    public void DeadMainMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("Settings").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.Flex;
+        root.Q<Button>("StartGame").style.display = DisplayStyle.None;
+        //root.Q<Button>("MainMenuAlmanac").style.display = DisplayStyle.Flex; don't have the almanac on the main menu, rather make the continue button lead to the game over screen again, which then has the option to go to the almanac should you want to
+        root.Q<Button>("MainMenuContinue").style.display = DisplayStyle.Flex;
+
+        root.Q<Button>("SettingsBack").clicked += () => OpenMenu(UIStatus.MainMenuGameOver);
+    }
+
+    public void DeadMainMenuUpdate(VisualElement root, ref PlayerData PlayerInfo)
+    {
+
+    }
+
+    #endregion
+
+    #region SettingsMenu
+
+    public void SettingsMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("Settings").style.display = DisplayStyle.Flex;
+        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
+    }
+
+    public void SettingsMenuUpdate(VisualElement root, ref PlayerData PlayerInfo)
+    {
+        PlayerInfo.SecondsUntilHoldMovement = root.Q<Slider>("HoldDelay").value;
+        PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
+        PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
+        PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
+        PlayerInfo.CameraSensitivity = root.Q<Slider>("Sensitivity").value;
+        PlayerInfo.RandomDistance = root.Q<SliderInt>("RandomDistance").value;
+        PlayerInfo.RandomsPerFrame = root.Q<SliderInt>("RandomsPerFrame").value;
+
+        bool Toggle3DValue = root.Q<Toggle>("3DToggle").value;
+
+        if (SystemAPI.HasSingleton<MapData>())
+        {
+            ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+
+            MapInfo.Quality = root.Q<Slider>("Quality").value;
+
+            MapInfo.OptimisationTechnique = (Optimisation)root.Q<EnumField>("OptimisationStrategy").value;
+            MapInfo.DebugStuff = (DebugFeatures)root.Q<EnumField>("DebugFeatures").value;
+
+            root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.None;
+            root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.None;
+
+            switch (MapInfo.OptimisationTechnique)
+            {
+                case Optimisation.None:
+                    break;
+
+                case Optimisation.Random:
+                    root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.Flex;
+                    root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.Flex;
+                    break;
+            }
+
+            if (Toggle3DValue != MapInfo.Is3D)
+            {
+                MapInfo.Is3D = Toggle3DValue;
+                    
+
+                if (MapInfo.Is3D)
+                {
+                    Debug.Log("Getting rid of the old 2d stuff!");
+
+                    MapInfo.RandomiseSeeds();
+                    MapInfo.GeneratedBlocks2D.Clear();
+
+                    EntityManager.DestroyEntity(MapInfo.ResetQuery);
+
+                    root.Q<Slider>("Quality").style.display = DisplayStyle.Flex;
+                    root.Q<Slider>("Sensitivity").style.display = DisplayStyle.Flex;
+                }
+                else
+                {
+                    Debug.Log("Getting rid of the old 3d stuff!");
+
+                    MapInfo.RandomiseSeeds();
+                    MapInfo.GeneratedBlocks3D.Clear();
+
+                    EntityManager.DestroyEntity(MapInfo.ResetQuery);
+
+                    root.Q<Slider>("Quality").style.display = DisplayStyle.None;
+                    root.Q<Slider>("Sensitivity").style.display = DisplayStyle.None;
+                }
+
+            }
+        }
+    }
+
+    #endregion
+
+    #region AliveMenu
+
+    public void AliveMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("PerksAndCurses").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("Almanac").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("Stats").style.display = DisplayStyle.Flex;
+    }
+
+    public void AliveMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
+    {
+        root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}\nKarma: {PlayerInfo.HiddenStats.y}";
+        root.Q<Label>("BiomeText").text = $"Biome: {UIInfo.BiomeName}";
+        root.Q<Label>("BiomeText").style.color = UIInfo.BiomeColour;
+    }
+
+    #endregion
+
+    #region DeadMenu
+
+    public void DeadMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("Stats").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("GameOver").style.display = DisplayStyle.Flex;
+        root.Q<VisualElement>("Almanac").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
+    }
+
+    //public void DeadMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
+    //{
+
+    //}
+
+    #endregion
+
+    #region PerksAndCursesMenu
+
+    public void PerksAndCursesMenuSetup(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
+    {
+        root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("PerksAndCurses").style.display = DisplayStyle.Flex;
+
+        UIInfo.Cost = (int)PlayerInfo.HiddenStats.y;
+
+        var PerkButtons = SystemAPI.GetSingletonBuffer<PerkButtonElement>();
+        var CurseButtons = SystemAPI.GetSingletonBuffer<CurseButtonElement>();
+        var OneTimeIndicesChosen = new NativeList<int>(Allocator.Temp);
+
+        RandomisePerk(ref PerkButtons.ElementAt(0), OneTimeIndicesChosen);
+        root.Q<Button>("P1").text = $"{PerkButtons[0].Description} Cost: {PerkButtons[0].CostToAdd}";
+
+        RandomisePerk(ref PerkButtons.ElementAt(1), OneTimeIndicesChosen);
+        root.Q<Button>("P2").text = $"{PerkButtons[1].Description} Cost: {PerkButtons[1].CostToAdd}";
+
+        RandomisePerk(ref PerkButtons.ElementAt(2), OneTimeIndicesChosen);
+        root.Q<Button>("P3").text = $"{PerkButtons[2].Description} Cost: {PerkButtons[2].CostToAdd}";
+
+        RandomisePerk(ref PerkButtons.ElementAt(3), OneTimeIndicesChosen);
+        root.Q<Button>("P4").text = $"{PerkButtons[3].Description} Cost: {PerkButtons[3].CostToAdd}";
+
+        RandomisePerk(ref PerkButtons.ElementAt(4), OneTimeIndicesChosen);
+        root.Q<Button>("P5").text = $"{PerkButtons[4].Description} Cost: {PerkButtons[4].CostToAdd}";
+
+        OneTimeIndicesChosen.Clear();
+
+        RandomiseCurse(ref CurseButtons.ElementAt(0), OneTimeIndicesChosen);
+        root.Q<Button>("C1").text = $"{CurseButtons[0].Description} Cost: {CurseButtons[0].CostToRemove}";
+
+        RandomiseCurse(ref CurseButtons.ElementAt(1), OneTimeIndicesChosen);
+        root.Q<Button>("C2").text = $"{CurseButtons[1].Description} Cost: {CurseButtons[1].CostToRemove}";
+
+        RandomiseCurse(ref CurseButtons.ElementAt(2), OneTimeIndicesChosen);
+        root.Q<Button>("C3").text = $"{CurseButtons[2].Description} Cost: {CurseButtons[2].CostToRemove}";
+
+        RandomiseCurse(ref CurseButtons.ElementAt(3), OneTimeIndicesChosen);
+        root.Q<Button>("C4").text = $"{CurseButtons[3].Description} Cost: {CurseButtons[3].CostToRemove}";
+
+        RandomiseCurse(ref CurseButtons.ElementAt(4), OneTimeIndicesChosen);
+        root.Q<Button>("C5").text = $"{CurseButtons[4].Description} Cost: {CurseButtons[4].CostToRemove}";
+
+        OneTimeIndicesChosen.Dispose();
+    }
+
+    public void PerksAndCursesMenuUpdate(VisualElement root, ref UIData UIInfo)
+    {
+        root.Q<Label>("Cost").text = $"Total Cost: {UIInfo.Cost}";
+    }
+
+    #endregion
+
+    #region AlmanacMenu
+
+    public void AlmanacMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("Almanac").style.display = DisplayStyle.Flex;
+        root.Q<VisualElement>("Stats").style.display = DisplayStyle.None;
+
+        root.Q<Button>("AlmanacBack").clicked += () => OpenMenu(UIStatus.Alive);
+        //root.Q<Button>("AlmanacMainMenu").clicked += () => SomethingGood(); No main menu.
+    }
+
+    public void AlmanacMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
+    {
+
+    }
+
+    public void TurnPage(int PageAmount, VisualElement root)
+    {
+        root.Q<IntegerField>("PageNum").value += PageAmount;
+    }
+
+    #endregion
+
+    #region DeadAlmanacMenu
+
+    public void DeadAlmanacMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("Almanac").style.display = DisplayStyle.Flex;
+        root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
+
+        root.Q<Button>("AlmanacBack").clicked += () => OpenMenu(UIStatus.Dead);
+        //root.Q<Button>("AlmanacMainMenu").clicked += () => SomethingGood(); No main menu.
+    }
+
+    public void DeadAlmanacMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
+    {
+
+    }
+
+    #endregion
+
+    #endregion
 
     public void Continue()
     {
@@ -450,61 +695,6 @@ public partial class UIManager : SystemBase
         }
     }
 
-    public void GoToMainMenu()
-    {
-        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        UIInfo.UIState = UIStatus.MainMenu;
-    }
-
-    public void GoToMainMenuGameOver()
-    {
-        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        UIInfo.UIState = UIStatus.MainMenuGameOver;
-
-        VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-        root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
-        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.Flex;
-        root.Q<Toggle>("3DToggle").style.display = DisplayStyle.None;
-        root.Q<Button>("StartGame").style.display = DisplayStyle.None;
-        root.Q<Button>("MainMenuAlmanac").style.display = DisplayStyle.Flex;
-        root.Q<Button>("MainMenuContinue").style.display = DisplayStyle.Flex;
-    }
-
-    //public void OpenAlmanacAlive()
-    //{
-    //    ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-    //    UIInfo.UIState = UIStatus.Almanac;
-
-    //    VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-    //    root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
-    //    root.Q<VisualElement>("Almanac").style.display = DisplayStyle.Flex;
-        
-    //    root.Q<Button>("AlmanacContinue").clicked += () => AlmanacToPerksAndCurses();
-    //    //root.Q<Button>("AlmanacMainMenu").clicked += () => SomethingGood();
-    //}
-
-    public void MainMenuToPerksAndCurses()
-    {
-        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        UIInfo.UIState = UIStatus.PerksAndCurses;
-
-        VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
-    }
-
-    public void AlmanacToPerksAndCurses()
-    {
-        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        UIInfo.UIState = UIStatus.PerksAndCurses;
-
-        VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-        root.Q<VisualElement>("Almanac").style.display = DisplayStyle.None;
-    }
-
     public void StartGame()
     {
         ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
@@ -566,7 +756,21 @@ public partial class UIManager : SystemBase
 public struct UIData : IComponentData
 {
     public int Cost;
-    public UIStatus UIState;
+
+    private UIStatus StoredState;
+
+    public UIStatus UIState
+    {
+        get => StoredState;
+        set
+        {
+            if (StoredState != value)
+            {
+                StoredState = value;
+                Setup = false;
+            }
+        }
+    }
     public bool Setup;
     public FixedString128Bytes BiomeName;
     public Color BiomeColour;
@@ -603,7 +807,9 @@ public enum UIStatus
     PerksAndCurses = 2,
     MainMenu = 3,
     MainMenuGameOver = 4,
-    Almanac = 5
+    Almanac = 5,
+    AlmanacDead = 6,
+    Settings = 7
 }
 
 /*
@@ -614,6 +820,32 @@ public enum UIStatus
  * 3 : main menu
  * 4 : main menu from game over screen (prevents people from avoiding karma)
  * 5 : Almanac
+ * 6 : Almanac when you are dead
+ * 7 : Settings
+ */
+
+public enum Optimisation
+{
+    None = 0,
+    Random = 1
+}
+
+/*
+ * Optimisations:
+ * 0 : none
+ * 1 : random generation of blocks every frame
+ */
+
+public enum DebugFeatures
+{
+    None = 0,
+    ShowTrueBiomeColour = 1
+}
+
+/*
+ * Debug Features:
+ * 0 : none
+ * 1 : Shows true colour of the biome in that block.
  */
 
 public enum Change
@@ -625,4 +857,12 @@ public enum Change
     DefaultVision,
     ChanceOfDangerousWarp,
     Skills
+}
+
+public enum AlmanacWorld
+{
+    World0,
+    Desert,
+    Ocean,
+    Mushy
 }
