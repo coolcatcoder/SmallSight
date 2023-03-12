@@ -33,15 +33,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="MainMenu" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: flex; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
             <ui:Label tabindex="-1" text="SmallSight" display-tooltip-when-elided="true" style="font-size: 90%; color: rgb(57, 9, 149); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(233, 30, 196);" />
-            <ui:Slider picking-mode="Ignore" label="Delay Until Hold Movement" value="0.25" high-value="2" focusable="true" show-input-field="true" name="HoldDelay" style="width: 80%; white-space: normal;" />
-            <ui:Slider picking-mode="Ignore" label="Delay Between Movement While Holding" value="0.1" high-value="2" focusable="true" show-input-field="true" name="DelayBetween" style="width: 80%;" />
-            <ui:Slider picking-mode="Ignore" label="Min Input Detected" value="1" high-value="1" focusable="true" show-input-field="true" name="MinInputDetected" style="width: 80%;" />
-            <ui:SliderInt picking-mode="Ignore" label="Render Distance" value="15" high-value="100" show-input-field="true" name="RenderDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
-            <ui:SliderInt picking-mode="Ignore" label="Random Distance" value="15" high-value="100" show-input-field="true" name="RandomDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
-            <ui:SliderInt picking-mode="Ignore" label="Randoms Per Frame" value="0" high-value="200" show-input-field="true" name="RandomsPerFrame" low-value="0" direction="Horizontal" style="width: 80%;" />
-            <ui:Toggle label="3D" name="3DToggle" style="width: auto;" />
-            <ui:Slider picking-mode="Ignore" label="Quality" value="1" high-value="10" focusable="true" show-input-field="true" name="Quality" low-value="0.25" style="width: 80%;" />
-            <ui:Slider picking-mode="Ignore" label="Sensitivity" value="2" high-value="10" focusable="true" show-input-field="true" name="Sensitivity" low-value="0" style="width: 80%;" />
+            <ui:Button text="Settings" display-tooltip-when-elided="true" name="ChangeSettings" />
             <ui:Button text="Start Adventure!" display-tooltip-when-elided="true" name="StartGame" />
             <ui:Button text="Continue!" display-tooltip-when-elided="true" name="MainMenuContinue" style="visibility: visible; display: none;" />
         </ui:VisualElement>
@@ -54,6 +46,20 @@
                 <ui:Button text="&gt;" display-tooltip-when-elided="true" name="NextPage" style="height: 10%;" />
             </ui:VisualElement>
             <ui:Button text="Back" display-tooltip-when-elided="true" name="AlmanacBack" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Settings" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: none; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
+            <ui:Slider picking-mode="Ignore" label="Delay Until Hold Movement" value="0.25" high-value="2" focusable="true" show-input-field="true" name="HoldDelay" style="width: 80%; white-space: normal;" />
+            <ui:Slider picking-mode="Ignore" label="Delay Between Movement While Holding" value="0.1" high-value="2" focusable="true" show-input-field="true" name="DelayBetween" style="width: 80%;" />
+            <ui:Slider picking-mode="Ignore" label="Min Input Detected" value="1" high-value="1" focusable="true" show-input-field="true" name="MinInputDetected" style="width: 80%;" />
+            <ui:SliderInt picking-mode="Ignore" label="Render Distance" value="15" high-value="100" show-input-field="true" name="RenderDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
+            <ui:Toggle label="3D" name="3DToggle" style="width: auto;" />
+            <ui:Slider picking-mode="Ignore" label="Quality" value="1" high-value="10" focusable="true" show-input-field="true" name="Quality" low-value="0.25" style="width: 80%; display: none;" />
+            <ui:Slider picking-mode="Ignore" label="Sensitivity" value="2" high-value="10" focusable="true" show-input-field="true" name="Sensitivity" low-value="0" style="width: 80%; display: none;" />
+            <ui:EnumField label="Optimisation Strategy" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="OptimisationStrategy" />
+            <ui:SliderInt picking-mode="Ignore" label="Random Distance" value="15" high-value="100" show-input-field="true" name="RandomDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
+            <ui:SliderInt picking-mode="Ignore" label="Randoms Per Frame" value="1" high-value="200" show-input-field="true" name="RandomsPerFrame" low-value="0" direction="Horizontal" style="width: 80%;" />
+            <ui:EnumField label="Debug Features" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="DebugFeatures" />
+            <ui:Button text="Back" display-tooltip-when-elided="true" name="SettingsBack" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

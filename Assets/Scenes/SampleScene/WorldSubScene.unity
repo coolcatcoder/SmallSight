@@ -963,6 +963,8 @@ MonoBehaviour:
     z: -6000
   WorldIndex: 0
   BlockBatchSize: 32
+  ColourMarker: {fileID: 1862855503442099543, guid: e39d9e049329c4b4e881a76921e984f6,
+    type: 3}
 --- !u!114 &736213431
 MonoBehaviour:
   m_ObjectHideFlags: 0

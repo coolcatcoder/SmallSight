@@ -46,7 +46,9 @@ public partial class UIManager : SystemBase
 
         root.Q<Button>("StatsAlmanac").clicked += () => OpenMenu(UIStatus.Almanac);
         root.Q<Button>("GameOverAlmanac").clicked += () => OpenMenu(UIStatus.AlmanacDead);
-        //root.Q<Button>("")
+
+        root.Q<Button>("SettingsBack").clicked += () => OpenMenu(UIStatus.MainMenu);
+        root.Q<Button>("ChangeSettings").clicked += () => OpenMenu(UIStatus.Settings);
 
         Button PerksAndCursesContinue = root.Q<Button>("PerksAndCursesContinue");
         PerksAndCursesContinue.clicked += () => Continue();
@@ -62,6 +64,14 @@ public partial class UIManager : SystemBase
         root.Q<Button>("C3").clicked += () => SelectCurseButton(3);
         root.Q<Button>("C4").clicked += () => SelectCurseButton(4);
         root.Q<Button>("C5").clicked += () => SelectCurseButton(5);
+
+        root.Q<EnumField>("OptimisationStrategy").Init(Optimisation.None);
+        root.Q<EnumField>("DebugFeatures").Init(DebugFeatures.None);
+        root.Q<EnumField>("WorldDropDown").Init(AlmanacWorld.World0);
+
+        root.Q<Button>("NextPage").clicked += () => TurnPage(1, root);
+        root.Q<Button>("PreviousPage").clicked += () => TurnPage(-1, root);
+
     }
 
     protected override void OnUpdate()
@@ -75,10 +85,10 @@ public partial class UIManager : SystemBase
             case UIStatus.MainMenu:
                 if (!UIInfo.Setup)
                 {
-                    MainMenuSetup(root);
+                    MainMenuSetup(root, ref PlayerInfo);
                     UIInfo.Setup = true;
                 }
-                MainMenuUpdate(root, ref PlayerInfo);
+                //MainMenuUpdate(root, ref PlayerInfo);
                 break;
 
             case UIStatus.Alive:
@@ -116,7 +126,7 @@ public partial class UIManager : SystemBase
                     DeadMainMenuSetup(root);
                     UIInfo.Setup = true;
                 }
-                DeadMainMenuUpdate(root, ref PlayerInfo);
+                //DeadMainMenuUpdate(root, ref PlayerInfo);
                 break;
 
             case UIStatus.Almanac:
@@ -135,6 +145,15 @@ public partial class UIManager : SystemBase
                     UIInfo.Setup = true;
                 }
                 //DeadAlmanacMenuUpdate(root, ref PlayerInfo);
+                break;
+
+            case UIStatus.Settings:
+                if (!UIInfo.Setup)
+                {
+                    SettingsMenuSetup(root);
+                    UIInfo.Setup = true;
+                }
+                SettingsMenuUpdate(root, ref PlayerInfo);
                 break;
         }
     }
@@ -237,55 +256,17 @@ public partial class UIManager : SystemBase
 
     #region MainMenu
 
-    public void MainMenuSetup(VisualElement root)
+    public void MainMenuSetup(VisualElement root, ref PlayerData PlayerInfo)
     {
         root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("Settings").style.display = DisplayStyle.None;
         root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.Flex;
+        SettingsMenuUpdate(root, ref PlayerInfo); // lazy...
     }
 
     public void MainMenuUpdate(VisualElement root, ref PlayerData PlayerInfo)
     {
-        PlayerInfo.SecondsUntilHoldMovement = root.Q<Slider>("HoldDelay").value;
-        PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
-        PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
-        PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
-        PlayerInfo.CameraSensitivity = root.Q<Slider>("Sensitivity").value;
-        PlayerInfo.RandomDistance = root.Q<SliderInt>("RandomDistance").value;
-        PlayerInfo.RandomsPerFrame = root.Q<SliderInt>("RandomsPerFrame").value;
 
-        bool Toggle3DValue = root.Q<Toggle>("3DToggle").value;
-
-        if (SystemAPI.HasSingleton<MapData>())
-        {
-            ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
-
-            MapInfo.Quality = root.Q<Slider>("Quality").value;
-
-            if (Toggle3DValue != MapInfo.Is3D)
-            {
-                MapInfo.Is3D = Toggle3DValue;
-
-                if (MapInfo.Is3D)
-                {
-                    Debug.Log("Getting rid of the old 2d stuff!");
-
-                    MapInfo.RandomiseSeeds();
-                    MapInfo.GeneratedBlocks2D.Clear();
-
-                    EntityManager.DestroyEntity(MapInfo.ResetQuery);
-                }
-                else
-                {
-                    Debug.Log("Getting rid of the old 3d stuff!");
-
-                    MapInfo.RandomiseSeeds();
-                    MapInfo.GeneratedBlocks3D.Clear();
-
-                    EntityManager.DestroyEntity(MapInfo.ResetQuery);
-                }
-
-            }
-        }
     }
 
     #endregion
@@ -295,13 +276,31 @@ public partial class UIManager : SystemBase
     public void DeadMainMenuSetup(VisualElement root)
     {
         root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
+        root.Q<VisualElement>("Settings").style.display = DisplayStyle.None;
         root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.Flex;
         root.Q<Button>("StartGame").style.display = DisplayStyle.None;
         //root.Q<Button>("MainMenuAlmanac").style.display = DisplayStyle.Flex; don't have the almanac on the main menu, rather make the continue button lead to the game over screen again, which then has the option to go to the almanac should you want to
         root.Q<Button>("MainMenuContinue").style.display = DisplayStyle.Flex;
+
+        root.Q<Button>("SettingsBack").clicked += () => OpenMenu(UIStatus.MainMenuGameOver);
     }
 
     public void DeadMainMenuUpdate(VisualElement root, ref PlayerData PlayerInfo)
+    {
+
+    }
+
+    #endregion
+
+    #region SettingsMenu
+
+    public void SettingsMenuSetup(VisualElement root)
+    {
+        root.Q<VisualElement>("Settings").style.display = DisplayStyle.Flex;
+        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
+    }
+
+    public void SettingsMenuUpdate(VisualElement root, ref PlayerData PlayerInfo)
     {
         PlayerInfo.SecondsUntilHoldMovement = root.Q<Slider>("HoldDelay").value;
         PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
@@ -319,9 +318,27 @@ public partial class UIManager : SystemBase
 
             MapInfo.Quality = root.Q<Slider>("Quality").value;
 
+            MapInfo.OptimisationTechnique = (Optimisation)root.Q<EnumField>("OptimisationStrategy").value;
+            MapInfo.DebugStuff = (DebugFeatures)root.Q<EnumField>("DebugFeatures").value;
+
+            root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.None;
+            root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.None;
+
+            switch (MapInfo.OptimisationTechnique)
+            {
+                case Optimisation.None:
+                    break;
+
+                case Optimisation.Random:
+                    root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.Flex;
+                    root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.Flex;
+                    break;
+            }
+
             if (Toggle3DValue != MapInfo.Is3D)
             {
                 MapInfo.Is3D = Toggle3DValue;
+                    
 
                 if (MapInfo.Is3D)
                 {
@@ -331,6 +348,9 @@ public partial class UIManager : SystemBase
                     MapInfo.GeneratedBlocks2D.Clear();
 
                     EntityManager.DestroyEntity(MapInfo.ResetQuery);
+
+                    root.Q<Slider>("Quality").style.display = DisplayStyle.Flex;
+                    root.Q<Slider>("Sensitivity").style.display = DisplayStyle.Flex;
                 }
                 else
                 {
@@ -340,6 +360,9 @@ public partial class UIManager : SystemBase
                     MapInfo.GeneratedBlocks3D.Clear();
 
                     EntityManager.DestroyEntity(MapInfo.ResetQuery);
+
+                    root.Q<Slider>("Quality").style.display = DisplayStyle.None;
+                    root.Q<Slider>("Sensitivity").style.display = DisplayStyle.None;
                 }
 
             }
@@ -453,6 +476,11 @@ public partial class UIManager : SystemBase
     public void AlmanacMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
     {
 
+    }
+
+    public void TurnPage(int PageAmount, VisualElement root)
+    {
+        root.Q<IntegerField>("PageNum").value += PageAmount;
     }
 
     #endregion
@@ -667,40 +695,6 @@ public partial class UIManager : SystemBase
         }
     }
 
-    //public void OpenAlmanacAlive()
-    //{
-    //    ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-    //    UIInfo.UIState = UIStatus.Almanac;
-
-    //    VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-    //    root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
-    //    root.Q<VisualElement>("Almanac").style.display = DisplayStyle.Flex;
-        
-    //    root.Q<Button>("AlmanacContinue").clicked += () => AlmanacToPerksAndCurses();
-    //    //root.Q<Button>("AlmanacMainMenu").clicked += () => SomethingGood();
-    //}
-
-    public void MainMenuToPerksAndCurses()
-    {
-        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        UIInfo.UIState = UIStatus.PerksAndCurses;
-
-        VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-        root.Q<VisualElement>("MainMenu").style.display = DisplayStyle.None;
-    }
-
-    public void AlmanacToPerksAndCurses()
-    {
-        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
-        UIInfo.UIState = UIStatus.PerksAndCurses;
-
-        VisualElement root = Object.FindObjectOfType<UIDocument>().rootVisualElement;
-
-        root.Q<VisualElement>("Almanac").style.display = DisplayStyle.None;
-    }
-
     public void StartGame()
     {
         ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
@@ -814,7 +808,8 @@ public enum UIStatus
     MainMenu = 3,
     MainMenuGameOver = 4,
     Almanac = 5,
-    AlmanacDead = 6
+    AlmanacDead = 6,
+    Settings = 7
 }
 
 /*
@@ -826,6 +821,31 @@ public enum UIStatus
  * 4 : main menu from game over screen (prevents people from avoiding karma)
  * 5 : Almanac
  * 6 : Almanac when you are dead
+ * 7 : Settings
+ */
+
+public enum Optimisation
+{
+    None = 0,
+    Random = 1
+}
+
+/*
+ * Optimisations:
+ * 0 : none
+ * 1 : random generation of blocks every frame
+ */
+
+public enum DebugFeatures
+{
+    None = 0,
+    ShowTrueBiomeColour = 1
+}
+
+/*
+ * Debug Features:
+ * 0 : none
+ * 1 : Shows true colour of the biome in that block.
  */
 
 public enum Change
@@ -837,4 +857,12 @@ public enum Change
     DefaultVision,
     ChanceOfDangerousWarp,
     Skills
+}
+
+public enum AlmanacWorld
+{
+    World0,
+    Desert,
+    Ocean,
+    Mushy
 }

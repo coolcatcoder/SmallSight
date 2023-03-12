@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -24,6 +25,8 @@ public class MapMaker : MonoBehaviour
     public int WorldIndex = 0;
 
     public int BlockBatchSize = 32;
+
+    public GameObject ColourMarker;
 }
 
 public class MapMakerBaker : Baker<MapMaker>
@@ -42,7 +45,8 @@ public class MapMakerBaker : Baker<MapMaker>
             MaxTeleportBounds = authoring.MaxTeleportBounds,
             MinTeleportBounds = authoring.MinTeleportBounds,
             WorldIndex = authoring.WorldIndex,
-            BlockBatchSize = authoring.BlockBatchSize
+            BlockBatchSize = authoring.BlockBatchSize,
+            ColourMarker = GetEntity(authoring.ColourMarker)
         });
     }
 }
@@ -82,6 +86,11 @@ public struct MapData : IComponentData
     public EntityQuery ResetQuery;
 
     public int BlockBatchSize;
+
+    public Optimisation OptimisationTechnique;
+    public DebugFeatures DebugStuff;
+
+    public Entity ColourMarker;
 }
 
 [ChunkSerializable]
@@ -110,6 +119,8 @@ public struct MapDataWithoutBlocks : IComponentData
     public int WorldIndex;
 
     public int BlockBatchSize;
+
+    public Entity ColourMarker;
 }
 
 
@@ -193,6 +204,13 @@ public struct BlockGenerator3D
     public Entity BiomeEntity;
 }
 
+public struct BlockGeneratorColourDebug
+{
+    public int2 Pos;
+    public Entity BiomeEntity;
+    public Color TrueColour;
+}
+
 public partial struct MapSystem : ISystem, ISystemStartStop
 {
     public void OnCreate(ref SystemState state)
@@ -226,13 +244,17 @@ public partial struct MapSystem : ISystem, ISystemStartStop
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
 
-        if (MapInfo.Is3D)
+        if (MapInfo.DebugStuff == DebugFeatures.ShowTrueBiomeColour)
         {
-            Update3D(ref MapInfo, ref state);
+            UpdateColourDebug(ref MapInfo, ref state);
+        }
+        else if (!MapInfo.Is3D)
+        {
+            Update2D(ref MapInfo, ref state);
         }
         else
         {
-            Update2D(ref MapInfo, ref state);
+            Update3D(ref MapInfo, ref state);
         }
         
     }
@@ -312,7 +334,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             GenerateBlock2D(BlocksToGenerate[i], ref MapInfo, ref state);
         }
 
-        if (BlocksToGenerate.Length == 0)
+        if (MapInfo.OptimisationTechnique == Optimisation.Random && BlocksToGenerate.Length == 0)
         {
             for (int i = 0; i < PlayerInfo.RandomsPerFrame; i++)
             {
@@ -331,6 +353,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
         BlocksToGenerate.Dispose();
     }
+
     public void Update3D(ref MapData MapInfo, ref SystemState state)
     {
         if (MapInfo.RestartGame)
@@ -397,6 +420,93 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         BlocksToGenerate.Dispose();
     }
 
+    public void UpdateColourDebug(ref MapData MapInfo, ref SystemState state)
+    {
+        if (MapInfo.RestartGame)
+        {
+            MapInfo.RestartGame = false;
+            MapInfo.RandomiseSeeds();
+            MapInfo.GeneratedBlocks2D.Clear();
+
+            state.EntityManager.DestroyEntity(MapInfo.ResetQuery);
+
+            if (!MapInfo.KeepStats)
+            {
+                ref PlayerData PlayerInfoRW = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+                PlayerInfoRW.VisibleStats = PlayerInfoRW.DefaultVisibleStats;
+                PlayerInfoRW.HiddenStats = PlayerInfoRW.DefaultHiddenStats;
+            }
+            else
+            {
+                MapInfo.KeepStats = false;
+            }
+
+            ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+            UIInfo.UIState = UIStatus.Alive;
+            UIInfo.Setup = false;
+
+            SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW.Position.xz = FindSafePos2D(ref state);
+
+            ref WorldData WorldInfo = ref SystemAPI.GetSingletonBuffer<WorldData>().ElementAt(MapInfo.WorldIndex);
+            RenderSettings.skybox.SetColor("_GroundColor", WorldInfo.BackGround);
+            RenderSettings.skybox.SetColor("_SkyTint", WorldInfo.BackGround);
+
+            SystemAPI.GetSingletonRW<PlayerData>().ValueRW.JustTeleported = true;
+        }
+
+        MovePlayerColourDebug(ref state, ref MapInfo);
+
+        //GenerateBlock((int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz, ref SystemAPI.GetSingletonRW<MapData>().ValueRW, ref state);
+
+        PlayerData PlayerInfo = SystemAPI.GetSingleton<PlayerData>();
+        int2 PlayerPos = (int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz;
+
+        int BlocksToSearch = PlayerInfo.GenerationThickness * PlayerInfo.GenerationThickness;
+
+        NativeList<BlockGeneratorColourDebug> BlocksToGenerate = new NativeList<BlockGeneratorColourDebug>(BlocksToSearch, Allocator.Persistent);
+
+        var BlocksToGenerateJob = new BlocksToGenerateColourDebugJob()
+        {
+            Blocks = BlocksToGenerate.AsParallelWriter(),
+            GeneratedBlocks = MapInfo.GeneratedBlocks2D,
+            GenerationPos = PlayerPos,
+            GenerationThickness = PlayerInfo.GenerationThickness
+        };
+
+        BlocksToGenerateJob.Schedule(BlocksToSearch, MapInfo.BlockBatchSize).Complete();
+
+        for (int i = 0; i < BlocksToGenerate.Length; i++)
+        {
+            BlocksToGenerate.ElementAt(i).BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(BlocksToGenerate[i].Pos), ref state);
+            BlocksToGenerate.ElementAt(i).TrueColour = MapInfo.GetBiomeColour2D(BlocksToGenerate.ElementAt(i).Pos);
+        }
+
+        for (int i = 0; i < BlocksToGenerate.Length; i++)
+        {
+            GenerateBlockColourDebug(BlocksToGenerate[i], ref MapInfo, ref state);
+        }
+
+        if (MapInfo.OptimisationTechnique == Optimisation.Random && BlocksToGenerate.Length == 0)
+        {
+            for (int i = 0; i < PlayerInfo.RandomsPerFrame; i++)
+            {
+                BlockGeneratorColourDebug RandBlock = new()
+                {
+                    Pos = MapInfo.RandStruct.NextInt2(PlayerPos - new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance), PlayerPos + new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance))
+                };
+
+                if (!MapInfo.GeneratedBlocks2D.ContainsKey(RandBlock.Pos))
+                {
+                    RandBlock.BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(RandBlock.Pos), ref state);
+                    RandBlock.TrueColour = MapInfo.GetBiomeColour2D(RandBlock.Pos);
+                    GenerateBlockColourDebug(RandBlock, ref MapInfo, ref state);
+                }
+            }
+        }
+
+        BlocksToGenerate.Dispose();
+    }
+
     public void SetupMapData(ref SystemState state)
     {
         ref MapDataWithoutBlocks MD = ref SystemAPI.GetSingletonRW<MapDataWithoutBlocks>().ValueRW;
@@ -418,7 +528,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             RandStruct = MD.RandStruct,
             RestartGame = MD.RestartGame,
             WorldIndex = MD.WorldIndex,
-            BlockBatchSize = MD.BlockBatchSize
+            BlockBatchSize = MD.BlockBatchSize,
+            ColourMarker = MD.ColourMarker
         });
     }
 
@@ -491,6 +602,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
         return BPos;
     }
+
+    #region Movement
 
     public void MovePlayer2D(ref SystemState state) //dont like how the player and the map maker are in 1 file...
     {
@@ -883,6 +996,72 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         }
     }
 
+    public void MovePlayerColourDebug(ref SystemState state, ref MapData MapInfo)
+    {
+        ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
+        ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
+        ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
+
+        if (PlayerInfo.VisibleStats.x <= 0 || UIInfo.UIState == UIStatus.MainMenu)
+        {
+            return;
+        }
+
+        if (InputInfo.Teleport && PlayerInfo.VisibleStats.z > 0)
+        {
+            InputInfo.Teleport = false;
+            MapInfo.RestartGame = true;
+            MapInfo.KeepStats = true;
+
+            bool IsDangerous = MapInfo.RandStruct.NextFloat() < (PlayerInfo.ChanceOfDangerousWarp / 100f);
+            bool Outcome = !IsDangerous;
+            int WorldIndex = 0;
+            DynamicBuffer<WorldData> Worlds = SystemAPI.GetSingletonBuffer<WorldData>();
+
+            while (Outcome != IsDangerous)
+            {
+                WorldIndex = MapInfo.RandStruct.NextInt(0, Worlds.Length);
+                Outcome = Worlds[WorldIndex].Dangerous;
+            }
+
+            MapInfo.WorldIndex = WorldIndex;
+        }
+
+        if (InputInfo.Pressed || (InputInfo.Held && (InputInfo.TimeHeldFor >= PlayerInfo.SecondsUntilHoldMovement)))
+        {
+            InputInfo.Pressed = false;
+            if (InputInfo.Held && (InputInfo.TimeHeldFor >= PlayerInfo.SecondsUntilHoldMovement))
+            {
+                InputInfo.TimeHeldFor = PlayerInfo.SecondsUntilHoldMovement - PlayerInfo.HeldMovementDelay;
+            }
+
+            ref LocalTransform PlayerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW;
+            float3 NewPos = PlayerTransform.Position;
+
+            if (InputInfo.Movement.x >= PlayerInfo.MinInputDetected)
+            {
+                NewPos.x += 1;
+            }
+            else if (InputInfo.Movement.x <= -PlayerInfo.MinInputDetected)
+            {
+                NewPos.x -= 1;
+            }
+
+            if (InputInfo.Movement.y >= PlayerInfo.MinInputDetected)
+            {
+                NewPos.z += 1;
+            }
+            else if (InputInfo.Movement.y <= -PlayerInfo.MinInputDetected)
+            {
+                NewPos.z -= 1;
+            }
+
+            PlayerTransform.Position = NewPos;
+        }
+    }
+
+    #endregion
+
     public void GenerateBlock2D(BlockGenerator2D BlockGenInfo, ref MapData MapInfo, ref SystemState state)
     {
         Entity BlockEntity = Entity.Null;
@@ -1027,6 +1206,82 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         MapInfo.GeneratedBlocks3D.Add(BlockGenInfo.Pos, BlockEntity);
     }
 
+    public void GenerateBlockColourDebug(BlockGeneratorColourDebug BlockGenInfo, ref MapData MapInfo, ref SystemState state)
+    {
+        Entity EColour = state.EntityManager.Instantiate(MapInfo.ColourMarker);
+        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(EColour, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x, 4, BlockGenInfo.Pos.y);
+        state.EntityManager.AddComponentData(EColour, new URPMaterialPropertyBaseColor { Value = new float4(BlockGenInfo.TrueColour.r, BlockGenInfo.TrueColour.g, BlockGenInfo.TrueColour.b, 1) });
+
+        Entity BlockEntity = Entity.Null;
+
+        //Entity BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour(BlockGenInfo.Pos), ref state);
+        BiomeData Biome = SystemAPI.GetComponent<BiomeData>(BlockGenInfo.BiomeEntity);
+        float BlockNoise = MapInfo.GetNoise2D(BlockGenInfo.Pos, Biome);
+        //Debug.Log(BlockNoise);
+
+        DynamicBuffer<BiomeFeature> BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(BlockGenInfo.BiomeEntity);
+
+        bool IsTerrain = false;
+
+        for (int i = 0; i < BiomeFeatures.Length; i++)
+        {
+            if (BiomeFeatures[i].IsTerrain && ((BlockNoise >= BiomeFeatures[i].MinNoiseValue) && (BlockNoise < BiomeFeatures[i].MaxNoiseValue)))
+            {
+                IsTerrain = true;
+                BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
+                SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, BlockGenInfo.Pos.y);
+
+                ref BlockData BlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BlockEntity, false).ValueRW;
+                if (BlockInfo.HasDecorations)
+                {
+                    var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
+                    if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
+                    {
+                        BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+
+                        DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
+                        float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+
+                        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x + DecorationPos.x, DecorationInfo.YLevel, BlockGenInfo.Pos.y + DecorationPos.y);
+                    }
+                }
+            }
+
+            //BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(BiomeEntity); this should not be required
+        }
+
+        if (!IsTerrain)
+        {
+            for (int i = 0; i < BiomeFeatures.Length; i++)
+            {
+                if ((!BiomeFeatures[i].IsTerrain) && (MapInfo.RandStruct.NextFloat() < BiomeFeatures[i].PercentChanceToSpawn / 100))
+                {
+                    BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[i].FeaturePrefab);
+                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, BlockGenInfo.Pos.y);
+
+                    ref BlockData BlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BlockEntity, false).ValueRW;
+                    if (BlockInfo.HasDecorations)
+                    {
+                        var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
+                        if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
+                        {
+                            BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+
+                            DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
+                            float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+
+                            SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x + DecorationPos.x, DecorationInfo.YLevel, BlockGenInfo.Pos.y + DecorationPos.y);
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        MapInfo.GeneratedBlocks2D.Add(BlockGenInfo.Pos, BlockEntity);
+    }
+
     public Entity GetBiomeEntity(int WorldIndex, Color BlockColour, ref SystemState state)
     {
         NativeReference<Entity> BEntity = new NativeReference<Entity>(Allocator.TempJob);
@@ -1165,6 +1420,33 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         public static int3 IndexTo3DPos(int Index, int GenerationThickness, int GenerationThicknessSquared)
         {
             return new int3(Index % GenerationThickness, Index / GenerationThickness % GenerationThickness, Index / GenerationThicknessSquared);
+        }
+    }
+
+    [BurstCompile]
+    struct BlocksToGenerateColourDebugJob : IJobParallelFor
+    {
+        [WriteOnly]
+        public NativeList<BlockGeneratorColourDebug>.ParallelWriter Blocks;
+        [ReadOnly]
+        public NativeHashMap<int2, Entity> GeneratedBlocks;
+        [ReadOnly]
+        public int2 GenerationPos;
+        [ReadOnly]
+        public int GenerationThickness;
+        public void Execute(int i)
+        {
+            int2 Pos = IndexTo2DPos(i, GenerationThickness) + GenerationPos - new int2(GenerationThickness, GenerationThickness) / 2;
+
+            if (!GeneratedBlocks.ContainsKey(Pos))
+            {
+                Blocks.AddNoResize(new BlockGeneratorColourDebug { Pos = Pos });
+            }
+        }
+
+        public static int2 IndexTo2DPos(int Index, int GenerationThickness)
+        {
+            return new int2(Index % GenerationThickness, Index / GenerationThickness);
         }
     }
 }
