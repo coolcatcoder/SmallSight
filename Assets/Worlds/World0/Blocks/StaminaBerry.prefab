@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4912369038166054591}
   - component: {fileID: -3518873094616314594}
   - component: {fileID: 6369474741109966021}
+  - component: {fileID: -978381580431393632}
   m_Layer: 0
   m_Name: StaminaBerry
   m_TagString: Untagged
@@ -112,7 +113,7 @@ MonoBehaviour:
     y: 0
     z: 0
     w: 0
-  Behaviour: 0
+  Behaviour: 4
   Decorations: []
 --- !u!114 &6369474741109966021
 MonoBehaviour:
@@ -126,3 +127,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-978381580431393632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866482175634483713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cacd9a24bfb5d944a49074ee26064fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Skill: 1
+  VisibleStatsChange:
+    x: 2
+    y: 5
+    z: 0
+    w: 0
+  HiddenStatsChange:
+    x: 0
+    y: 0
+    z: 0
+    w: 0

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 204732662716743343}
   - component: {fileID: 743825225219121971}
   - component: {fileID: 4386331956348317525}
+  - component: {fileID: -4503985772673372180}
   m_Layer: 0
   m_Name: CircleTerrain
   m_TagString: Untagged
@@ -112,7 +113,7 @@ MonoBehaviour:
     y: 0
     z: 0
     w: 0
-  Behaviour: 0
+  Behaviour: 4
   Decorations: []
 --- !u!114 &4386331956348317525
 MonoBehaviour:
@@ -126,3 +127,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-4503985772673372180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1862855503442099543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cacd9a24bfb5d944a49074ee26064fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Skill: 32
+  VisibleStatsChange:
+    x: 1
+    y: 1
+    z: 0
+    w: 0
+  HiddenStatsChange:
+    x: 0
+    y: 0
+    z: 0
+    w: 0

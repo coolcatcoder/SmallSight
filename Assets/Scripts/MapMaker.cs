@@ -91,6 +91,8 @@ public struct MapData : IComponentData
     public DebugFeatures DebugStuff;
 
     public Entity ColourMarker;
+
+    public int FramesSinceLastMovement;
 }
 
 [ChunkSerializable]
@@ -269,6 +271,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
     }
 
+    #region Updates
+
     public void Update2D(ref MapData MapInfo, ref SystemState state)
     {
         if (MapInfo.RestartGame)
@@ -290,6 +294,15 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                 MapInfo.KeepStats = false;
             }
 
+            AddBlocksJob AddBlocks = new AddBlocksJob
+            {
+                WorldIndex = MapInfo.WorldIndex,
+                GeneratedBlocks = MapInfo.GeneratedBlocks2D
+            };
+
+            state.Dependency = AddBlocks.Schedule(state.Dependency);
+            state.Dependency.Complete();
+
             ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
             UIInfo.UIState = UIStatus.Alive;
             UIInfo.Setup = false;
@@ -303,7 +316,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             SystemAPI.GetSingletonRW<PlayerData>().ValueRW.JustTeleported = true;
         }
 
-        MovePlayer2D(ref state);
+        bool HasMoved = MovePlayer2D(ref state);
 
         //GenerateBlock((int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz, ref SystemAPI.GetSingletonRW<MapData>().ValueRW, ref state);
 
@@ -350,8 +363,22 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                 }
             }
         }
+        else if (MapInfo.OptimisationTechnique == Optimisation.Spiral && BlocksToGenerate.Length == 0)
+        {
+            Debug.Log("I haven't done this yet, sorry!");
+        }
 
         BlocksToGenerate.Dispose();
+
+        if (HasMoved)
+        {
+            //Debug.Log("The player is going places!");
+            MapInfo.FramesSinceLastMovement = 0;
+        }
+        else
+        {
+            MapInfo.FramesSinceLastMovement++;
+        }
     }
 
     public void Update3D(ref MapData MapInfo, ref SystemState state)
@@ -507,6 +534,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         BlocksToGenerate.Dispose();
     }
 
+    #endregion
+
     public void SetupMapData(ref SystemState state)
     {
         ref MapDataWithoutBlocks MD = ref SystemAPI.GetSingletonRW<MapDataWithoutBlocks>().ValueRW;
@@ -605,15 +634,17 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
     #region Movement
 
-    public void MovePlayer2D(ref SystemState state) //dont like how the player and the map maker are in 1 file...
+    public bool MovePlayer2D(ref SystemState state) //dont like how the player and the map maker are in 1 file...
     {
+        bool HasMoved = false;
+
         ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
 
         if (PlayerInfo.VisibleStats.x <= 0 || UIInfo.UIState == UIStatus.MainMenu)
         {
-            return;
+            return false;
         }
 
         if (InputInfo.Teleport && PlayerInfo.VisibleStats.z > 0)
@@ -625,6 +656,8 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
             PlayerInfo.VisibleStats.z--;
             PlayerInfo.JustTeleported = true;
+
+            return true;
         }
 
         if (InputInfo.Pressed || (InputInfo.Held && (InputInfo.TimeHeldFor >= PlayerInfo.SecondsUntilHoldMovement)))
@@ -666,6 +699,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                     if (BlockEntity == Entity.Null)
                     {
                         PlayerTransform.Position = NewPos;
+                        HasMoved = true;
 
                         if (PlayerInfo.PlayerSkills.HasFlag(Skills.Exhausted))
                         {
@@ -698,7 +732,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                         {
                             if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.SkillToCross) && !(PlayerInfo.PlayerSkills.HasFlag(SystemAPI.GetComponent<SkillToCrossBehaviourData>(BlockEntity).Skill)))
                             {
-                                return;
+                                return false;
                             }
 
                             if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.SkillStats))
@@ -735,7 +769,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
                             if (BlockInfo.Behaviour != SpecialBehaviour.None)
                             {
-                                if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Warp))
+                                if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Warp) && MapInfo.DebugStuff != DebugFeatures.NoWarps)
                                 {
                                     MapInfo.RestartGame = true;
                                     MapInfo.KeepStats = true;
@@ -770,6 +804,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                             }
 
                             PlayerTransform.Position = NewPos;
+                            HasMoved = true;
 
                             PlayerInfo.VisibleStats.y--;
                             if (PlayerInfo.VisibleStats.y < 0)
@@ -794,6 +829,7 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             //    Debug.Log($"PT: {PlayerTransform.Position}\nNT: {NewPos}");
             //}
         }
+        return HasMoved;
     }
 
     public void MovePlayer3D(ref SystemState state)
@@ -1447,6 +1483,24 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         public static int2 IndexTo2DPos(int Index, int GenerationThickness)
         {
             return new int2(Index % GenerationThickness, Index / GenerationThickness);
+        }
+    }
+
+    [BurstCompile]
+    public partial struct AddBlocksJob : IJobEntity
+    {
+        [ReadOnly]
+        public int WorldIndex;
+
+        [WriteOnly]
+        public NativeHashMap<int2, Entity> GeneratedBlocks;
+
+        void Execute(ref AddToWorldData BlockInfo, ref WorldTransform BlockTransform, Entity entity)
+        {
+            if (BlockInfo.WorldIndex == WorldIndex)
+            {
+                GeneratedBlocks.Add((int2)BlockTransform.Position.xz,entity);
+            }
         }
     }
 }

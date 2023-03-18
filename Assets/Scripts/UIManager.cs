@@ -6,6 +6,8 @@ using Unity.Mathematics;
 using TMPro;
 using Unity.Collections;
 using UnityEngine.UIElements;
+using Unity.Burst;
+using Unity.Transforms;
 
 public partial class UIManager : SystemBase
 {
@@ -13,6 +15,7 @@ public partial class UIManager : SystemBase
     {
         RequireForUpdate<PlayerData>();
         //RequireForUpdate<MapData>(); impossible
+        RequireForUpdate<MouseBlockMarkerData>();
     }
 
     protected override void OnStartRunning()
@@ -132,19 +135,19 @@ public partial class UIManager : SystemBase
             case UIStatus.Almanac:
                 if (!UIInfo.Setup)
                 {
-                    AlmanacMenuSetup(root);
+                    AlmanacMenuSetup(root, ref UIInfo);
                     UIInfo.Setup = true;
                 }
-                //AlmanacMenuUpdate(root, ref PlayerInfo);
+                AlmanacMenuUpdate(root, ref PlayerInfo, ref UIInfo);
                 break;
 
             case UIStatus.AlmanacDead:
                 if (!UIInfo.Setup)
                 {
-                    DeadAlmanacMenuSetup(root);
+                    DeadAlmanacMenuSetup(root, ref UIInfo);
                     UIInfo.Setup = true;
                 }
-                //DeadAlmanacMenuUpdate(root, ref PlayerInfo);
+                AlmanacMenuUpdate(root, ref PlayerInfo, ref UIInfo); // dead and alive are basically the same
                 break;
 
             case UIStatus.Settings:
@@ -386,6 +389,15 @@ public partial class UIManager : SystemBase
         root.Q<Label>("StatsText").text = $"Health: {PlayerInfo.VisibleStats.x}\nStamina: {PlayerInfo.VisibleStats.y}\nTeleports: {PlayerInfo.VisibleStats.z}\nStrength: {PlayerInfo.VisibleStats.w}\nKarma: {PlayerInfo.HiddenStats.y}";
         root.Q<Label>("BiomeText").text = $"Biome: {UIInfo.BiomeName}";
         root.Q<Label>("BiomeText").style.color = UIInfo.BiomeColour;
+
+        ref LocalTransform MouseMarkerTransform = ref SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<MouseBlockMarkerData>(), false).ValueRW;
+
+        if (!SystemAPI.GetSingleton<MapData>().Is3D)
+        {
+            MouseMarkerTransform.Position = math.floor((float3)Camera.main.ScreenToWorldPoint(Input.mousePosition) + new float3(0.5f, 0, 0.5f));
+            MouseMarkerTransform.Position.y = 4;
+            //MouseMarkerTransform.Position.x += 1;
+        }
     }
 
     #endregion
@@ -464,18 +476,53 @@ public partial class UIManager : SystemBase
 
     #region AlmanacMenu
 
-    public void AlmanacMenuSetup(VisualElement root)
+    public void AlmanacMenuSetup(VisualElement root, ref UIData UIInfo)
     {
         root.Q<VisualElement>("Almanac").style.display = DisplayStyle.Flex;
         root.Q<VisualElement>("Stats").style.display = DisplayStyle.None;
 
         root.Q<Button>("AlmanacBack").clicked += () => OpenMenu(UIStatus.Alive);
         //root.Q<Button>("AlmanacMainMenu").clicked += () => SomethingGood(); No main menu.
+
+        if (UIInfo.SavedWorldEntity == Entity.Null)
+        {
+            UIInfo.SavedWorldEntity = GetWorldPagesEntity(AlmanacWorld.World0);
+            LoadPage(0, root, ref UIInfo);
+        }
     }
 
     public void AlmanacMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
     {
+        AlmanacWorld CurrentWorld = (AlmanacWorld)root.Q<EnumField>("WorldDropDown").value;
 
+        if (CurrentWorld != UIInfo.SavedWorld)
+        {
+            UIInfo.SavedWorldEntity = GetWorldPagesEntity(CurrentWorld);
+            LoadPage(0, root, ref UIInfo);
+            UIInfo.SavedWorld = CurrentWorld;
+            UIInfo.SavedPageNum = 0;
+            root.Q<IntegerField>("PageNum").value = 0;
+            return;
+        }
+
+        int CurrentPage = root.Q<IntegerField>("PageNum").value;
+
+        if (CurrentPage < 0)
+        {
+            CurrentPage = 0;
+            root.Q<IntegerField>("PageNum").value = 0;
+        }
+        else if (CurrentPage >= UIInfo.SavedTotalPages)
+        {
+            CurrentPage = UIInfo.SavedTotalPages-1;
+            root.Q<IntegerField>("PageNum").value = UIInfo.SavedTotalPages-1;
+        }
+
+        if (UIInfo.SavedPageNum != CurrentPage)
+        {
+            LoadPage(CurrentPage, root, ref UIInfo);
+            UIInfo.SavedPageNum = CurrentPage;
+        }
     }
 
     public void TurnPage(int PageAmount, VisualElement root)
@@ -483,17 +530,75 @@ public partial class UIManager : SystemBase
         root.Q<IntegerField>("PageNum").value += PageAmount;
     }
 
+    public void LoadPage(int Page, VisualElement root, ref UIData UIInfo)
+    {
+        DynamicBuffer<PageElement> CurrentPages = SystemAPI.GetBuffer<PageElement>(UIInfo.SavedWorldEntity);
+        ManagedIconData Icons = SystemAPI.ManagedAPI.GetComponent<ManagedIconData>(UIInfo.SavedWorldEntity);
+
+        UIInfo.SavedTotalPages = CurrentPages.Length;
+
+        root.Q<Label>("MainParagraph").text = CurrentPages.ElementAt(Page).Paragraph.ConvertToString();
+        root.Q<Label>("PageTitle").text = CurrentPages.ElementAt(Page).Title.ConvertToString();
+        root.Q<VisualElement>("PageIcon").style.backgroundImage = new StyleBackground(Icons.Icons[Page]);
+    }
+
+    public Entity GetWorldPagesEntity(AlmanacWorld DesiredWorld)
+    {
+        NativeReference<Entity> WEntity = new NativeReference<Entity>(Allocator.TempJob);
+        AlmanacWorldEntityJob WJob = new AlmanacWorldEntityJob
+        {
+            DesiredWorld = DesiredWorld,
+            WorldEntity = WEntity
+        };
+
+        Dependency = WJob.Schedule(Dependency);
+        Dependency.Complete();
+
+        Entity WorldEntity = WJob.WorldEntity.Value;
+        WEntity.Dispose();
+
+        if (WorldEntity == Entity.Null)
+        {
+            Debug.Log("What the hell?");
+        }
+
+        return WorldEntity;
+    }
+
+    [BurstCompile]
+    public partial struct AlmanacWorldEntityJob : IJobEntity
+    {
+        [ReadOnly]
+        public AlmanacWorld DesiredWorld;
+
+        public NativeReference<Entity> WorldEntity;
+
+        void Execute(ref AlmanacData WorldPages, Entity entity)
+        {
+            if (WorldPages.BelongsTo == DesiredWorld)
+            {
+                WorldEntity.Value = entity;
+            }
+        }
+    }
+
     #endregion
 
     #region DeadAlmanacMenu
 
-    public void DeadAlmanacMenuSetup(VisualElement root)
+    public void DeadAlmanacMenuSetup(VisualElement root, ref UIData UIInfo)
     {
         root.Q<VisualElement>("Almanac").style.display = DisplayStyle.Flex;
         root.Q<VisualElement>("GameOver").style.display = DisplayStyle.None;
 
         root.Q<Button>("AlmanacBack").clicked += () => OpenMenu(UIStatus.Dead);
         //root.Q<Button>("AlmanacMainMenu").clicked += () => SomethingGood(); No main menu.
+
+        if (UIInfo.SavedWorldEntity == Entity.Null)
+        {
+            UIInfo.SavedWorldEntity = GetWorldPagesEntity(AlmanacWorld.World0);
+            LoadPage(0, root, ref UIInfo);
+        }
     }
 
     public void DeadAlmanacMenuUpdate(VisualElement root, ref PlayerData PlayerInfo, ref UIData UIInfo)
@@ -774,6 +879,11 @@ public struct UIData : IComponentData
     public bool Setup;
     public FixedString128Bytes BiomeName;
     public Color BiomeColour;
+
+    public int SavedPageNum;
+    public int SavedTotalPages;
+    public Entity SavedWorldEntity;
+    public AlmanacWorld SavedWorld;
 }
 
 public struct PerkButtonElement : IBufferElementData
@@ -827,7 +937,8 @@ public enum UIStatus
 public enum Optimisation
 {
     None = 0,
-    Random = 1
+    Random = 1,
+    Spiral = 2
 }
 
 /*
@@ -839,7 +950,8 @@ public enum Optimisation
 public enum DebugFeatures
 {
     None = 0,
-    ShowTrueBiomeColour = 1
+    ShowTrueBiomeColour = 1,
+    NoWarps = 2,
 }
 
 /*

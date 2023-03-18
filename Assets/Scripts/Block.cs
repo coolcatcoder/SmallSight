@@ -15,6 +15,9 @@ public class Block : MonoBehaviour
 
     public SpecialBehaviour Behaviour = SpecialBehaviour.None;
 
+    public AlmanacWorld SectionIn;
+    public int PageOn;
+
     public GameObject[] Decorations;
 }
 
@@ -32,7 +35,9 @@ public class BlockBaker : Baker<Block>
             TeleportSafe = authoring.TeleportSafe,
             YLevel = authoring.YLevel,
             HasDecorations = authoring.Decorations != null,
-            DecorationChance = authoring.DecorationChance
+            DecorationChance = authoring.DecorationChance,
+            SectionIn = authoring.SectionIn,
+            PageOn = authoring.PageOn
         });
 
         if (authoring.Decorations != null)
@@ -62,6 +67,9 @@ public struct BlockData : IComponentData
     public float4 HiddenStatsChange;
 
     public SpecialBehaviour Behaviour;
+
+    public AlmanacWorld SectionIn;
+    public int PageOn;
 
     public Entity DecorationEntity;
     public bool HasDecorations;
