@@ -93,6 +93,10 @@ public struct MapData : IComponentData
     public Entity ColourMarker;
 
     public int FramesSinceLastMovement;
+    public int2 PreviousSpiralPos;
+
+    public int BlocksToSpiral;
+    public int MaxBlocksToSpiral;
 }
 
 [ChunkSerializable]
@@ -240,6 +244,31 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         PlayerInfo.VisibleStats = PlayerInfo.DefaultVisibleStats;
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
+
+        //NativeReference<int2> JobPrevPos = new NativeReference<int2>(Allocator.TempJob);
+        //NativeList<int2> SpiralPositions = new NativeList<int2>(MapInfo.BlocksToSpiral, Allocator.TempJob);
+
+        //SpiralPosJob PosJob = new SpiralPosJob()
+        //{
+        //    PreviousPosition = JobPrevPos,
+        //    Index = MapInfo.FramesSinceLastMovement,
+        //    Quantity = MapInfo.BlocksToSpiral,
+        //    Blocks = SpiralPositions
+        //};
+
+        //PosJob.Schedule().Complete();
+
+        //MapInfo.PreviousSpiralPos = JobPrevPos.Value;
+        //JobPrevPos.Dispose();
+
+        //MapInfo.FramesSinceLastMovement += MapInfo.BlocksToSpiral - 1;
+
+        //for (int i = 0; i < MapInfo.BlocksToSpiral; i++)
+        //{
+        //    Debug.Log(SpiralPositions[i]);
+        //}
+
+        //SpiralPositions.Dispose();
     }
 
     public void OnUpdate(ref SystemState state)
@@ -275,9 +304,12 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
     public void Update2D(ref MapData MapInfo, ref SystemState state)
     {
+        bool HasRestarted = false;
+
         if (MapInfo.RestartGame)
         {
             MapInfo.RestartGame = false;
+            HasRestarted = true;
             MapInfo.RandomiseSeeds();
             MapInfo.GeneratedBlocks2D.Clear();
 
@@ -318,66 +350,113 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
         bool HasMoved = MovePlayer2D(ref state);
 
-        //GenerateBlock((int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz, ref SystemAPI.GetSingletonRW<MapData>().ValueRW, ref state);
-
         PlayerData PlayerInfo = SystemAPI.GetSingleton<PlayerData>();
         int2 PlayerPos = (int2)SystemAPI.GetComponent<LocalTransform>(SystemAPI.GetSingletonEntity<PlayerData>()).Position.xz;
 
-        int BlocksToSearch = PlayerInfo.GenerationThickness * PlayerInfo.GenerationThickness;
-
-        NativeList<BlockGenerator2D> BlocksToGenerate = new NativeList<BlockGenerator2D>(BlocksToSearch, Allocator.Persistent);
-
-        var BlocksToGenerateJob = new BlocksToGenerate2DJob()
+        if (HasMoved || HasRestarted)
         {
-            Blocks = BlocksToGenerate.AsParallelWriter(),
-            GeneratedBlocks = MapInfo.GeneratedBlocks2D,
-            GenerationPos = PlayerPos,
-            GenerationThickness = PlayerInfo.GenerationThickness
-        };
+            int BlocksToSearch = PlayerInfo.GenerationThickness * PlayerInfo.GenerationThickness;
 
-        BlocksToGenerateJob.Schedule(BlocksToSearch, MapInfo.BlockBatchSize).Complete();
+            NativeList<BlockGenerator2D> BlocksToGenerate = new NativeList<BlockGenerator2D>(BlocksToSearch, Allocator.Persistent);
 
-        for (int i = 0; i < BlocksToGenerate.Length; i++)
-        {
-            BlocksToGenerate.ElementAt(i).BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(BlocksToGenerate[i].Pos), ref state);
-        }
-
-        for (int i = 0; i < BlocksToGenerate.Length; i++)
-        {
-            GenerateBlock2D(BlocksToGenerate[i], ref MapInfo, ref state);
-        }
-
-        if (MapInfo.OptimisationTechnique == Optimisation.Random && BlocksToGenerate.Length == 0)
-        {
-            for (int i = 0; i < PlayerInfo.RandomsPerFrame; i++)
+            var BlocksToGenerateJob = new BlocksToGenerate2DJob()
             {
-                BlockGenerator2D RandBlock = new()
-                {
-                    Pos = MapInfo.RandStruct.NextInt2(PlayerPos - new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance), PlayerPos + new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance))
-                };
+                Blocks = BlocksToGenerate.AsParallelWriter(),
+                GeneratedBlocks = MapInfo.GeneratedBlocks2D,
+                GenerationPos = PlayerPos,
+                GenerationThickness = PlayerInfo.GenerationThickness
+            };
 
-                if (!MapInfo.GeneratedBlocks2D.ContainsKey(RandBlock.Pos))
-                {
-                    RandBlock.BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(RandBlock.Pos), ref state);
-                    GenerateBlock2D(RandBlock, ref MapInfo, ref state);
-                }
+            BlocksToGenerateJob.Schedule(BlocksToSearch, MapInfo.BlockBatchSize).Complete();
+
+            for (int i = 0; i < BlocksToGenerate.Length; i++)
+            {
+                BlocksToGenerate.ElementAt(i).BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(BlocksToGenerate[i].Pos), ref state);
             }
-        }
-        else if (MapInfo.OptimisationTechnique == Optimisation.Spiral && BlocksToGenerate.Length == 0)
-        {
-            Debug.Log("I haven't done this yet, sorry!");
-        }
 
-        BlocksToGenerate.Dispose();
+            for (int i = 0; i < BlocksToGenerate.Length; i++)
+            {
+                GenerateBlock2DChaos(BlocksToGenerate[i], ref MapInfo, ref state);
+            }
 
-        if (HasMoved)
-        {
+            BlocksToGenerate.Dispose();
+
             //Debug.Log("The player is going places!");
-            MapInfo.FramesSinceLastMovement = 0;
+            MapInfo.FramesSinceLastMovement = 1;
+            MapInfo.PreviousSpiralPos = new int2(0, 0);
         }
         else
         {
             MapInfo.FramesSinceLastMovement++;
+
+            if (MapInfo.OptimisationTechnique == Optimisation.Random)
+            {
+                for (int i = 0; i < PlayerInfo.RandomsPerFrame; i++)
+                {
+                    BlockGenerator2D RandBlock = new()
+                    {
+                        Pos = MapInfo.RandStruct.NextInt2(PlayerPos - new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance), PlayerPos + new int2(PlayerInfo.RandomDistance, PlayerInfo.RandomDistance))
+                    };
+
+                    if (!MapInfo.GeneratedBlocks2D.ContainsKey(RandBlock.Pos))
+                    {
+                        RandBlock.BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(RandBlock.Pos), ref state);
+                        GenerateBlock2D(RandBlock, ref MapInfo, ref state);
+                    }
+                }
+            }
+
+            if (MapInfo.OptimisationTechnique == Optimisation.Spiral)
+            {
+                if (MapInfo.FramesSinceLastMovement < MapInfo.MaxBlocksToSpiral)
+                {
+                    NativeReference<int2> JobPrevPos = new NativeReference<int2>(Allocator.TempJob);
+                    JobPrevPos.Value = MapInfo.PreviousSpiralPos;
+                    NativeList<int2> SpiralPositions = new NativeList<int2>(MapInfo.BlocksToSpiral, Allocator.TempJob);
+
+                    SpiralPosJob PosJob = new SpiralPosJob()
+                    {
+                        PreviousPosition = JobPrevPos,
+                        Index = MapInfo.FramesSinceLastMovement,
+                        Quantity = MapInfo.BlocksToSpiral,
+                        Blocks = SpiralPositions
+                    };
+
+                    PosJob.Schedule().Complete();
+
+                    MapInfo.PreviousSpiralPos = JobPrevPos.Value;
+                    JobPrevPos.Dispose();
+
+                    MapInfo.FramesSinceLastMovement += MapInfo.BlocksToSpiral - 1;
+
+                    for (int i = 0; i < MapInfo.BlocksToSpiral; i++)
+                    {
+                        if (!MapInfo.GeneratedBlocks2D.ContainsKey(SpiralPositions[i] + PlayerPos))
+                        {
+                            BlockGenerator2D SpiralBlock = new()
+                            {
+                                Pos = SpiralPositions[i] + PlayerPos
+                            };
+
+                            SpiralBlock.BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(SpiralBlock.Pos), ref state);
+                            GenerateBlock2D(SpiralBlock, ref MapInfo, ref state);
+                        }
+                    }
+
+                    SpiralPositions.Dispose();
+
+                    //MapInfo.PreviousSpiralPos = GetNextSpiralPos(MapInfo.PreviousSpiralPos, MapInfo.FramesSinceLastMovement);
+                }
+                else
+                {
+                    MapInfo.FramesSinceLastMovement--;
+                }
+            }
+            else
+            {
+                MapInfo.FramesSinceLastMovement = 1;
+                MapInfo.PreviousSpiralPos = new int2(0, 0);
+            }
         }
     }
 
@@ -769,23 +848,31 @@ public partial struct MapSystem : ISystem, ISystemStartStop
 
                             if (BlockInfo.Behaviour != SpecialBehaviour.None)
                             {
-                                if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Warp) && MapInfo.DebugStuff != DebugFeatures.NoWarps)
+                                if (MapInfo.DebugStuff != DebugFeatures.NoWarps)
                                 {
-                                    MapInfo.RestartGame = true;
-                                    MapInfo.KeepStats = true;
-
-                                    bool IsDangerous = MapInfo.RandStruct.NextFloat() < (PlayerInfo.ChanceOfDangerousWarp / 100f);
-                                    bool Outcome = !IsDangerous;
-                                    int WorldIndex = 0;
-                                    DynamicBuffer<WorldData> Worlds = SystemAPI.GetSingletonBuffer<WorldData>();
-
-                                    while (Outcome != IsDangerous)
+                                    if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Warp))
                                     {
-                                        WorldIndex = MapInfo.RandStruct.NextInt(0, Worlds.Length);
-                                        Outcome = Worlds[WorldIndex].Dangerous;
+                                        MapInfo.RestartGame = true;
+                                        MapInfo.KeepStats = true;
+
+                                        bool IsDangerous = MapInfo.RandStruct.NextFloat() < (PlayerInfo.ChanceOfDangerousWarp / 100f);
+                                        bool Outcome = !IsDangerous;
+                                        int WorldIndex = 0;
+                                        DynamicBuffer<WorldData> Worlds = SystemAPI.GetSingletonBuffer<WorldData>();
+
+                                        while (Outcome != IsDangerous)
+                                        {
+                                            WorldIndex = MapInfo.RandStruct.NextInt(0, Worlds.Length);
+                                            Outcome = Worlds[WorldIndex].Dangerous;
+                                        }
+
+                                        MapInfo.WorldIndex = WorldIndex;
                                     }
 
-                                    MapInfo.WorldIndex = WorldIndex;
+                                    if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.WarpToRuins))
+                                    {
+                                        PlayerTransform.Position = SystemAPI.GetComponent<RuinsWarpBehaviourData>(BlockEntity).RuinPos; //teleports them to whatever ruin it is
+                                    }
                                 }
 
                                 if (BlockInfo.Behaviour.HasFlag(SpecialBehaviour.Replace))
@@ -803,7 +890,10 @@ public partial struct MapSystem : ISystem, ISystemStartStop
                                 }
                             }
 
-                            PlayerTransform.Position = NewPos;
+                            if (!BlockInfo.Behaviour.HasFlag(SpecialBehaviour.WarpToRuins))
+                            {
+                                PlayerTransform.Position = NewPos;
+                            }
                             HasMoved = true;
 
                             PlayerInfo.VisibleStats.y--;
@@ -1168,6 +1258,76 @@ public partial struct MapSystem : ISystem, ISystemStartStop
         }
 
         MapInfo.GeneratedBlocks2D.Add(BlockGenInfo.Pos, BlockEntity);
+    } //delete this
+
+    public void GenerateBlock2DChaos(BlockGenerator2D BlockGenInfo, ref MapData MapInfo, ref SystemState state)
+    {
+        BiomeData Biome = SystemAPI.GetComponent<BiomeData>(BlockGenInfo.BiomeEntity);
+        float BlockNoise = MapInfo.GetNoise2D(BlockGenInfo.Pos, Biome);
+
+        DynamicBuffer<BiomeFeature> BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(BlockGenInfo.BiomeEntity);
+
+        int TerrainIndex = -1;
+        int OtherIndex = -1;
+
+        for (int i = 0; i < BiomeFeatures.Length; i++)
+        {
+            if (BiomeFeatures[i].IsTerrain && (BlockNoise >= BiomeFeatures[i].MinNoiseValue) && (BlockNoise < BiomeFeatures[i].MaxNoiseValue))
+            {
+                if (TerrainIndex == -1)
+                {
+                    TerrainIndex = i;
+                }
+            }
+            else if (MapInfo.RandStruct.NextFloat() < BiomeFeatures[i].PercentChanceToSpawn / 100)
+            {
+                if (OtherIndex == -1)
+                {
+                    OtherIndex = i;
+                }
+            }
+
+            if (TerrainIndex != -1 && OtherIndex != -1)
+            {
+                break;
+            }
+        }
+
+        if (TerrainIndex == -1 && OtherIndex == -1)
+        {
+            MapInfo.GeneratedBlocks2D.Add(BlockGenInfo.Pos, Entity.Null);
+        }
+        else
+        {
+            int FeatureIndex;
+            if (TerrainIndex != -1)
+            {
+                FeatureIndex = TerrainIndex;
+            }
+            else
+            {
+                FeatureIndex = OtherIndex;
+            }
+
+            Entity BlockEntity = state.EntityManager.Instantiate(BiomeFeatures[FeatureIndex].FeaturePrefab);
+            MapInfo.GeneratedBlocks2D.Add(BlockGenInfo.Pos, BlockEntity);
+            SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, BlockGenInfo.Pos.y);
+
+            ref BlockData BlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BlockEntity, false).ValueRW;
+            if (BlockInfo.HasDecorations)
+            {
+                var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
+                if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
+                {
+                    BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+
+                    DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
+                    float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+
+                    SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x + DecorationPos.x, DecorationInfo.YLevel, BlockGenInfo.Pos.y + DecorationPos.y);
+                }
+            }
+        }
     }
 
     public void GenerateBlock3D(BlockGenerator3D BlockGenInfo, ref MapData MapInfo, ref SystemState state)
@@ -1501,6 +1661,34 @@ public partial struct MapSystem : ISystem, ISystemStartStop
             {
                 GeneratedBlocks.Add((int2)BlockTransform.Position.xz,entity);
             }
+        }
+    }
+
+    //[BurstCompile]
+    struct SpiralPosJob : IJob
+    {
+        [WriteOnly]
+        public NativeList<int2> Blocks;
+
+        public NativeReference<int2> PreviousPosition;
+
+        [ReadOnly]
+        public int Index;
+        [ReadOnly]
+        public int Quantity;
+
+        public void Execute()
+        {
+            for (int i = 0; i < Quantity; i++)
+            {
+                PreviousPosition.Value = GetNextSpiralPos(PreviousPosition.Value, i+Index);
+                Blocks.Add(PreviousPosition.Value);
+            }
+        }
+
+        public static int2 GetNextSpiralPos(int2 PreviousPos, int SpiralIndex)
+        {
+            return new int2((int)math.round(PreviousPos.x + math.sin(math.floor(math.sqrt(4 * SpiralIndex - 7)) * math.PI / 2)), (int)math.round(PreviousPos.y + math.cos(math.floor(math.sqrt(4 * SpiralIndex - 7)) * math.PI / 2)));
         }
     }
 }

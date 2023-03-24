@@ -327,6 +327,9 @@ public partial class UIManager : SystemBase
             root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.None;
             root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.None;
 
+            root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.None;
+            root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.None;
+
             switch (MapInfo.OptimisationTechnique)
             {
                 case Optimisation.None:
@@ -335,6 +338,14 @@ public partial class UIManager : SystemBase
                 case Optimisation.Random:
                     root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.Flex;
                     root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.Flex;
+                    break;
+
+                case Optimisation.Spiral:
+                    root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.Flex;
+                    root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.Flex;
+
+                    MapInfo.MaxBlocksToSpiral = root.Q<SliderInt>("BlocksPerFrame").value;
+                    MapInfo.BlocksToSpiral = root.Q<SliderInt>("MaxFrames").value;
                     break;
             }
 

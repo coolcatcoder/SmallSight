@@ -114,6 +114,8 @@ MonoBehaviour:
     z: 0
     w: 0
   Behaviour: 2
+  SectionIn: 0
+  PageOn: 0
   Decorations: []
 --- !u!114 &4386331956348317525
 MonoBehaviour:

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 204732662716743343}
   - component: {fileID: 743825225219121971}
   - component: {fileID: 4386331956348317525}
+  - component: {fileID: -1363610856825692644}
   m_Layer: 0
   m_Name: TradeSwish
   m_TagString: Untagged
@@ -112,7 +113,9 @@ MonoBehaviour:
     y: 0
     z: 0
     w: 0
-  Behaviour: 0
+  Behaviour: 16
+  SectionIn: 0
+  PageOn: 0
   Decorations: []
 --- !u!114 &4386331956348317525
 MonoBehaviour:
@@ -126,3 +129,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c875c7a15fba5498f0acb88b7c80bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-1363610856825692644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1862855503442099543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da239b0a976c0ff4d928da20866e9550, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RuinPos:
+    x: 3003
+    y: 0
+    z: -2995

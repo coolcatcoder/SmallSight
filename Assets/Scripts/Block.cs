@@ -87,5 +87,6 @@ public enum SpecialBehaviour
     Warp = 1,
     Replace = 2,
     SkillStats = 4,
-    SkillToCross = 8
+    SkillToCross = 8,
+    WarpToRuins = 16
 }
