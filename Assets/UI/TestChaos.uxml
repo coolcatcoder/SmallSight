@@ -31,7 +31,7 @@
             <ui:Button text="Main Menu" display-tooltip-when-elided="true" name="GoToMainMenu" style="width: 30%; left: 35%; position: relative; top: 30%;" />
             <ui:Button text="Open Almanac" display-tooltip-when-elided="true" name="GameOverAlmanac" style="width: 30%; left: 35%; position: relative; top: 30%;" />
         </ui:VisualElement>
-        <ui:VisualElement name="MainMenu" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: none; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
+        <ui:VisualElement name="MainMenu" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: flex; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
             <ui:Label tabindex="-1" text="SmallSight" display-tooltip-when-elided="true" style="font-size: 90%; color: rgb(57, 9, 149); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(233, 30, 196);" />
             <ui:Button text="Settings" display-tooltip-when-elided="true" name="ChangeSettings" />
             <ui:Button text="Start Adventure!" display-tooltip-when-elided="true" name="StartGame" />
@@ -51,7 +51,7 @@
             </ui:VisualElement>
             <ui:Button text="Back" display-tooltip-when-elided="true" name="AlmanacBack" />
         </ui:VisualElement>
-        <ui:VisualElement name="Settings" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: flex; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
+        <ui:VisualElement name="Settings" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: none; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
             <ui:Slider picking-mode="Ignore" label="Delay Until Hold Movement" value="0.25" high-value="2" focusable="true" show-input-field="true" name="HoldDelay" style="width: 80%; white-space: normal;" />
             <ui:Slider picking-mode="Ignore" label="Delay Between Movement While Holding" value="0.1" high-value="2" focusable="true" show-input-field="true" name="DelayBetween" style="width: 80%;" />
             <ui:Slider picking-mode="Ignore" label="Min Input Detected" value="1" high-value="1" focusable="true" show-input-field="true" name="MinInputDetected" style="width: 80%;" />

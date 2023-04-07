@@ -52861,6 +52861,20 @@ MonoBehaviour:
       This is a placeholder.
       It will only appear in 1 or 2 biomes once I add more rocks.'
     PageIcon: {fileID: 2800000, guid: d78212bdab064ba43abfb9680f3d217a, type: 3}
+  - Title: SwishySwish
+    Paragraph: 'Type: Plant
+
+      Location: Grassland (Extremely Common)
+
+      
+
+      Stamina:
+      +1
+
+      
+
+      This long blue swishy grass is slightly springy!'
+    PageIcon: {fileID: 2800000, guid: 49704e3b50c58ff469a823df67f167a9, type: 3}
 --- !u!1 &1095598780
 GameObject:
   m_ObjectHideFlags: 0

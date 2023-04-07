@@ -9,6 +9,8 @@ using UnityEngine.UIElements;
 using Unity.Burst;
 using Unity.Transforms;
 
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateBefore(typeof(Map2DStart))]
 public partial class UIManager : SystemBase
 {
     protected override void OnCreate()
@@ -344,8 +346,8 @@ public partial class UIManager : SystemBase
                     root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.Flex;
                     root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.Flex;
 
-                    MapInfo.MaxBlocksToSpiral = root.Q<SliderInt>("BlocksPerFrame").value;
-                    MapInfo.BlocksToSpiral = root.Q<SliderInt>("MaxFrames").value;
+                    MapInfo.MaxBlocksToSpiral = root.Q<SliderInt>("MaxFrames").value;
+                    MapInfo.BlocksToSpiral = root.Q<SliderInt>("BlocksPerFrame").value;
                     break;
             }
 
