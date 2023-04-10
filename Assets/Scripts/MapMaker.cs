@@ -95,6 +95,8 @@ public struct MapData : IComponentData
     public int MaxBlocksToSpiral;
 
     public bool HasMoved;
+
+    public EntityQuery RemoveAddToTilemapManagerQuery;
 }
 
 //public struct MapDataWithoutBlocks : IComponentData
@@ -132,6 +134,10 @@ public struct TilemapData : IComponentData
     public NativeParallelHashMap<int2, Entity> ParallelTilemapManager; //experimental
 }
 
+public struct AddToTilemapManager : IComponentData
+{
+
+}
 
 public static class MapExtensionMethods
 {
@@ -1663,6 +1669,7 @@ public struct BlockGeneratorColourDebug
 
 [BurstCompile]
 [UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateAfter(typeof(BeginInitializationEntityCommandBufferSystem))]
 public partial struct Map2DStart : ISystem, ISystemStartStop
 {
     [BurstCompile]
@@ -1691,6 +1698,10 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                 .WithAllRW<DestroyOnRestartData>()
                 .Build(ref state);
 
+        MapInfo.RemoveAddToTilemapManagerQuery = new EntityQueryBuilder(Allocator.Temp)
+            .WithAll<AddToTilemapManager>()
+            .Build(ref state);
+
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         PlayerInfo.VisibleStats = PlayerInfo.DefaultVisibleStats;
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
@@ -1702,6 +1713,14 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
         ref TilemapData TilemapInfo = ref SystemAPI.GetSingletonRW<TilemapData>().ValueRW;
 
+        var AddECBBlocks = new AddECBBlocksJob()
+        {
+
+        };
+        AddECBBlocks.Schedule(new JobHandle()).Complete();
+
+        state.EntityManager.RemoveComponent<AddToTilemapManager>(MapInfo.RemoveAddToTilemapManagerQuery);
+
         if (MapInfo.RestartGame)
         {
             RestartGame(ref MapInfo, ref TilemapInfo, ref state);
@@ -1712,7 +1731,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         if (MapInfo.HasMoved || MapInfo.RestartGame)
         {
-            //GenerateBlocks(ref state, ref MapInfo, ref TilemapInfo, PlayerInfo.GenerationThickness, PlayerPos);
+            GenerateBlocks(ref state, ref MapInfo, ref TilemapInfo, PlayerInfo.GenerationThickness, PlayerPos);
         }
     }
 
@@ -1732,8 +1751,9 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         NativeArray<int2> BlockPositions = new NativeArray<int2>(BlocksToSearch, Allocator.Persistent);
         NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlocksToSearch, Allocator.Persistent);
-
+        NativeArray<BiomeData> BlockBiomes = new NativeArray<BiomeData>(BlocksToSearch, Allocator.Persistent);
         NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlocksToSearch, Allocator.Persistent);
+        NativeList<int2> EmptySpaces = new NativeList<int2>(BlocksToSearch, Allocator.Persistent); // there should never be 100% empty space, but weird stuff happens sometimes
         //dispose native containers above using dispose(JobHandle)!!
 
         var FindBlocks = new FindBlocksJob() // done
@@ -1752,10 +1772,13 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             BiomeSeed = MapInfo.BiomeSeed
         };
 
-        //var GetBiomes = new GetBiomesJob()
-        //{
-
-        //};
+        var GetBiomes = new GetBiomesJob()
+        {
+            BlockBiomeNoise = BlockBiomeNoise,
+            BlockBiomes = BlockBiomes,
+            WorldIndex = MapInfo.WorldIndex,
+            BlockQuantity = BlocksToSearch
+        };
 
         var GetNoise = new GetNoiseJob()
         {
@@ -1765,17 +1788,20 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             TerrainNoiseScale = MapInfo.TerrainNoiseScale
         };
 
-        //var GenerateBlocks = new GenerateBlocksJob()
-        //{
-        //    Blocks = BlocksToGenerate,
-        //    RandStruct = MapInfo.RandStruct,
-        //    GeneratedBlocks = TilemapInfo.TilemapManager
-        //};
+        var GenerateBlocks = new GenerateBlocksJob()
+        {
+            ECB = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+            RandStruct = MapInfo.RandStruct,
+            BlockBiomes = BlockBiomes,
+            BlockTerrainNoise = BlockTerrainNoise,
+            BlockPositions = BlockPositions,
+            EmptySpaces = EmptySpaces.AsParallelWriter()
+        };
 
-        //var AddBlocksToHash = new AddBlocksToHashMapJob()
-        //{
+        var AddEmptyBlocksToHash = new AddEmptyBlocksToHashJob()
+        {
 
-        //};
+        };
 
         //var DisposeArrays = new DisposeArraysJob()
         //{
@@ -1784,9 +1810,10 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
         var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
-        //var GetBiomesHandle = GetBiomes.ScheduleParallel(GetBiomeNoiseHandle);
-        //var GetNoiseHandle = GetNoise.ScheduleParallel(GetBiomesHandle);
-        //var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(GetNoiseHandle); // this might have to not be parallel depending on what is faster
+        var GetBiomesHandle = GetBiomes.Schedule(GetBiomeNoiseHandle); // no parallel sadly....
+        var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetBiomesHandle);
+        var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetNoiseHandle);
+        var AddEmptyBlocksToHashHandle = AddEmptyBlocksToHash.Schedule(GenerateBlocksHandle);
     }
 
     [BurstCompile]
@@ -1914,6 +1941,36 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
+    public partial struct GetBiomesJob : IJobEntity // this won't work in parallel ugh
+    {
+        [ReadOnly]
+        public NativeArray<float3> BlockBiomeNoise;
+
+        [WriteOnly]
+        public NativeArray<BiomeData> BlockBiomes;
+
+        [ReadOnly]
+        public int WorldIndex;
+
+        [ReadOnly]
+        public int BlockQuantity;
+
+        void Execute(ref BiomeData Biome)
+        {
+            if (Biome.WorldIndex == WorldIndex)
+            {
+                for (int i = 0; i < BlockQuantity; i++)
+                {
+                    if (math.distancesq(Biome.ColourSpawn, BlockBiomeNoise[i]) <= Biome.MaxDistance)
+                    {
+                        BlockBiomes[i] = Biome;
+                    }
+                }
+            }
+        }
+    }
+
+    [BurstCompile]
     struct GetNoiseJob : IJobFor
     {
         [ReadOnly]
@@ -1942,90 +1999,133 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         }
     }
 
-    //[BurstCompile]
-    //struct GenerateBlocksJob : IJob // I hate this naming scheme!!!!!!! Also this sooo could be a parallel for loop just by adding the entities to the hash map in a later non parallel job...
-    //{
-    //    public EntityCommandBuffer ECB;
+    [BurstCompile]
+    struct GenerateBlocksJob : IJobFor
+    {
+        [ReadOnly]
+        public BiomeData DefaultBiome;
 
-    //    public NativeList<BlockGenerator> Blocks;
+        public EntityCommandBuffer.ParallelWriter ECB;
 
-    //    public Unity.Mathematics.Random RandStruct;
+        [ReadOnly]
+        public Unity.Mathematics.Random RandStruct;
 
-    //    public NativeHashMap<int2, Entity> GeneratedBlocks;
+        [ReadOnly]
+        public NativeArray<BiomeData> BlockBiomes;
 
-    //    public void Execute()
-    //    {
-    //        for (int i = 0; i < 15; i++) // what the hell is 15??????????
-    //        {
-    //            BiomeData Biome = SystemAPI.GetComponent<BiomeData>(Blocks[i].BiomeEntity);
-    //            //float BlockNoise = MapInfo.GetNoise2D(BlockGenInfo.Pos, Biome);
+        [ReadOnly]
+        public NativeArray<float> BlockTerrainNoise;
 
-    //            DynamicBuffer<BiomeFeature> BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(Blocks[i].BiomeEntity);
+        [ReadOnly]
+        public NativeArray<int2> BlockPositions;
 
-    //            int TerrainIndex = -1;
-    //            int OtherIndex = -1;
+        [WriteOnly]
+        public NativeList<int2>.ParallelWriter EmptySpaces; // current bad solution for how to handle empty space
 
-    //            for (int k = 0; k < BiomeFeatures.Length; k++)
-    //            {
-    //                if (BiomeFeatures[k].IsTerrain && (Blocks[i].TerrainNoise >= BiomeFeatures[k].MinNoiseValue) && (Blocks[i].TerrainNoise < BiomeFeatures[k].MaxNoiseValue))
-    //                {
-    //                    if (TerrainIndex == -1)
-    //                    {
-    //                        TerrainIndex = i;
-    //                    }
-    //                }
-    //                else if (RandStruct.NextFloat() < BiomeFeatures[k].PercentChanceToSpawn / 100)
-    //                {
-    //                    if (OtherIndex == -1)
-    //                    {
-    //                        OtherIndex = i;
-    //                    }
-    //                }
+        public void Execute(int i)
+        {
+            BiomeData Biome = BlockBiomes[i];
+            if (!Biome.NotNull)
+            {
+                Biome = DefaultBiome;
+            }
+            ref var BiomeFeatures = ref Biome.BiomeFeaturesBlobAsset.Value.BiomeFeatures;
 
-    //                if (TerrainIndex != -1 && OtherIndex != -1)
-    //                {
-    //                    break;
-    //                }
-    //            }
+            //float BlockNoise = MapInfo.GetNoise2D(BlockGenInfo.Pos, Biome);
 
-    //            if (TerrainIndex == -1 && OtherIndex == -1)
-    //            {
-    //                GeneratedBlocks.Add(Blocks[i].Position, Entity.Null);
-    //            }
-    //            else
-    //            {
-    //                int FeatureIndex;
-    //                if (TerrainIndex != -1)
-    //                {
-    //                    FeatureIndex = TerrainIndex;
-    //                }
-    //                else
-    //                {
-    //                    FeatureIndex = OtherIndex;
-    //                }
+            //DynamicBuffer<BiomeFeature> BiomeFeatures = SystemAPI.GetBuffer<BiomeFeature>(BlockBiomeEntities[i]);
 
-    //                Entity BlockEntity = ECB.Instantiate(BiomeFeatures[FeatureIndex].FeaturePrefab);
-    //                GeneratedBlocks.Add(Blocks[i].Position, BlockEntity);
-    //                SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x, SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel, BlockGenInfo.Pos.y);
+            int TerrainIndex = -1;
+            int OtherIndex = -1;
 
-    //                ref BlockData PrefabBlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BiomeFeatures[FeatureIndex].FeaturePrefab, false).ValueRW;
-    //                if (PrefabBlockInfo.HasDecorations)
-    //                {
-    //                    var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
-    //                    if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
-    //                    {
-    //                        BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+            for (int k = 0; k < BiomeFeatures.Length; k++)
+            {
+                if (BiomeFeatures[k].IsTerrain && (BlockTerrainNoise[i] >= BiomeFeatures[k].MinNoiseValue) && (BlockTerrainNoise[i] < BiomeFeatures[k].MaxNoiseValue))
+                {
+                    if (TerrainIndex == -1)
+                    {
+                        TerrainIndex = i;
+                    }
+                }
+                else if (RandStruct.NextFloat() < BiomeFeatures[k].PercentChanceToSpawn / 100)
+                {
+                    if (OtherIndex == -1)
+                    {
+                        OtherIndex = i;
+                    }
+                }
 
-    //                        DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
-    //                        float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+                if (TerrainIndex != -1 && OtherIndex != -1) // || or && I don't know!
+                {
+                    break;
+                }
+            }
 
-    //                        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x + DecorationPos.x, DecorationInfo.YLevel, BlockGenInfo.Pos.y + DecorationPos.y);
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+            if (TerrainIndex == -1 && OtherIndex == -1)
+            {
+                EmptySpaces.AddNoResize(BlockPositions[i]); // this is how we deal with empty space because pain
+            }
+            else
+            {
+                int FeatureIndex;
+
+                FeatureIndex = math.select(TerrainIndex, OtherIndex, TerrainIndex!=-1); // if 3rd param, then 1st param, else 2nd param, nice and simple!
+
+                Entity BlockEntity = ECB.Instantiate(i,BiomeFeatures[FeatureIndex].FeaturePrefab);
+
+                ECB.AddComponent(i, BlockEntity, new AddToTilemapManager());
+
+                ECB.SetComponent(i, BlockEntity, LocalTransform.FromPosition(new float3(BlockPositions[i].x, -1, BlockPositions[i].y))); // instead of -1 for the y, it should be SystemAPI.GetComponent<BlockData>(BlockEntity).YLevel but you can't do this in a job, perhaps add another blob arary in the blob asset containing all the y values?
+
+                //Don't know how to replace this yet, todo asap though!
+                //ref BlockData PrefabBlockInfo = ref SystemAPI.GetComponentLookup<BlockData>().GetRefRW(BiomeFeatures[FeatureIndex].FeaturePrefab, false).ValueRW;
+                //if (PrefabBlockInfo.HasDecorations)
+                //{
+                //    var DecorationBuffer = SystemAPI.GetBuffer<DecorationElement>(BlockEntity);
+                //    if (MapInfo.RandStruct.NextFloat() < BlockInfo.DecorationChance / 100)
+                //    {
+                //        BlockInfo.DecorationEntity = state.EntityManager.Instantiate(DecorationBuffer[MapInfo.RandStruct.NextInt(0, DecorationBuffer.Length)].DecorationEntity);
+
+                //        DecorationData DecorationInfo = SystemAPI.GetComponent<DecorationData>(BlockInfo.DecorationEntity);
+                //        float2 DecorationPos = MapInfo.RandStruct.NextFloat2(DecorationInfo.MinPos, DecorationInfo.MaxPos);
+
+                //        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(BlockInfo.DecorationEntity, false).ValueRW.Position = new float3(BlockGenInfo.Pos.x + DecorationPos.x, DecorationInfo.YLevel, BlockGenInfo.Pos.y + DecorationPos.y);
+                //    }
+                //}
+            }
+
+        }
+    }
+
+    [BurstCompile]
+    struct AddEmptyBlocksToHashJob : IJob
+    {
+        [ReadOnly]
+        public NativeList<int2> EmptySpaces;
+
+        [WriteOnly]
+        public NativeHashMap<int2, Entity> TilemapManager;
+
+        public void Execute()
+        {
+            for(int i = 0; i < EmptySpaces.Length; i++)
+            {
+                TilemapManager.Add(EmptySpaces[i], Entity.Null);
+            }
+        }
+    }
+
+    [BurstCompile]
+    public partial struct AddECBBlocksJob : IJobEntity
+    {
+        [WriteOnly]
+        public NativeHashMap<int2, Entity> TilemapManager;
+
+        void Execute(AddToTilemapManager AddComp, LocalTransform BlockTransform, Entity BlockEntity)
+        {
+            TilemapManager.Add((int2)BlockTransform.Position.xz, BlockEntity);
+        }
+    }
 
     [BurstCompile]
     public partial struct AddBlocksJob : IJobEntity

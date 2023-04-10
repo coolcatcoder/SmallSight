@@ -23,28 +23,45 @@ public class BiomeBaker : Baker<Biome>
         var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.Features != null)
         {
+            var builder = new BlobBuilder(Allocator.Temp);
+            ref BiomeFeatureBlobPool BiomeFeaturesBlobPoolInfo = ref builder.ConstructRoot<BiomeFeatureBlobPool>();
+
+            BlobBuilderArray<BiomeFeatureBlobElement> arrayBuilder = builder.Allocate(
+                ref BiomeFeaturesBlobPoolInfo.BiomeFeatures,
+                authoring.Features.Length
+                );
+
+            // set stuff here in a for loop
+            for (int i = 0; i < authoring.Features.Length; i++)
+            {
+                arrayBuilder[i] = new BiomeFeatureBlobElement()
+                {
+                    FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab, TransformUsageFlags.Dynamic),
+                    PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
+                    IsTerrain = authoring.Features[i].IsTerrain,
+                    MinNoiseValue = authoring.Features[i].MinNoiseValue,
+                    MaxNoiseValue = authoring.Features[i].MaxNoiseValue
+                };
+            }
+
+            var blobReference = builder.CreateBlobAssetReference<BiomeFeatureBlobPool>(Allocator.Persistent);
+
+            builder.Dispose();
+
+            AddBlobAsset(ref blobReference, out var hash);
+
             AddComponent(entity, new BiomeData
             {
                 BiomeName = authoring.BiomeName,
                 ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
                 ColourSpawn = new float3(authoring.ColourSpawn.r,authoring.ColourSpawn.g,authoring.ColourSpawn.b)*2-1,
-                MaxDistance = authoring.MaxDistance,
-                WorldIndex = authoring.WorldIndex
-            });
+                MaxDistance = authoring.MaxDistance*authoring.MaxDistance,
+                WorldIndex = authoring.WorldIndex,
 
-            var FeatureBuffer = AddBuffer<BiomeFeature>(entity);
-            for (int i = 0; i < authoring.Features.Length; i++)
-            {
-                FeatureBuffer.Add(new BiomeFeature
-                {
-                    FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab, TransformUsageFlags.Dynamic),
-                    PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
-                    //Danger = authoring.Features[i].Danger,
-                    IsTerrain = authoring.Features[i].IsTerrain,
-                    MinNoiseValue = authoring.Features[i].MinNoiseValue,
-                    MaxNoiseValue = authoring.Features[i].MaxNoiseValue
-                });
-            }
+                BiomeFeaturesBlobAsset = blobReference,
+
+                NotNull = true
+            });
         }
     }
 }
@@ -57,18 +74,36 @@ public struct BiomeData : IComponentData
 
     public float3 ColourSpawn;
     public float MaxDistance;
+
+    public BlobAssetReference<BiomeFeatureBlobPool> BiomeFeaturesBlobAsset;
+
+    public bool NotNull;
 }
 
-[InternalBufferCapacity(0)]
-public struct BiomeFeature : IBufferElementData
+public struct BiomeFeatureBlobElement
 {
     public Entity FeaturePrefab;
     public float PercentChanceToSpawn;
-    //public int Danger;
     public bool IsTerrain;
     public float MinNoiseValue;
     public float MaxNoiseValue;
 }
+
+public struct BiomeFeatureBlobPool
+{
+    public BlobArray<BiomeFeatureBlobElement> BiomeFeatures;
+}
+
+//[InternalBufferCapacity(0)]
+//public struct BiomeFeature : IBufferElementData
+//{
+//    public Entity FeaturePrefab;
+//    public float PercentChanceToSpawn;
+//    //public int Danger;
+//    public bool IsTerrain;
+//    public float MinNoiseValue;
+//    public float MaxNoiseValue;
+//}
 
 [System.Serializable]
 public struct BiomeAuthoringFeature
