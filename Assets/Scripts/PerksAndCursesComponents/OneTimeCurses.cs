@@ -14,9 +14,10 @@ public class OneTimeCursesBaker : Baker<OneTimeCurses>
 {
     public override void Bake(OneTimeCurses authoring)
     {
+        var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.Curses != null)
         {
-            var FeatureBuffer = AddBuffer<OneTimeCurseElement>();
+            var FeatureBuffer = AddBuffer<OneTimeCurseElement>(entity);
             for (int i = 0; i < authoring.Curses.Length; i++)
             {
                 FeatureBuffer.Add(new OneTimeCurseElement

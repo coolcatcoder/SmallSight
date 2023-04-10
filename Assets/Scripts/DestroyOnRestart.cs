@@ -13,7 +13,8 @@ public class DestroyOnRestartBaker : Baker<DestroyOnRestart>
 {
     public override void Bake(DestroyOnRestart authoring)
     {
-        AddComponent<DestroyOnRestartData>();
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent<DestroyOnRestartData>(entity);
     }
 }
 

@@ -14,9 +14,10 @@ public class WorldsBaker : Baker<Worlds>
 {
     public override void Bake(Worlds authoring)
     {
+        var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.WorldElements != null)
         {
-            var WorldBuffer = AddBuffer<WorldData>();
+            var WorldBuffer = AddBuffer<WorldData>(entity);
             for (int i = 0; i < authoring.WorldElements.Length; i++)
             {
                 WorldBuffer.Add(new WorldData

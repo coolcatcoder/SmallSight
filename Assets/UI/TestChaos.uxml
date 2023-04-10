@@ -56,9 +56,6 @@
             <ui:Slider picking-mode="Ignore" label="Delay Between Movement While Holding" value="0.1" high-value="2" focusable="true" show-input-field="true" name="DelayBetween" style="width: 80%;" />
             <ui:Slider picking-mode="Ignore" label="Min Input Detected" value="1" high-value="1" focusable="true" show-input-field="true" name="MinInputDetected" style="width: 80%;" />
             <ui:SliderInt picking-mode="Ignore" label="Render Distance" value="15" high-value="100" show-input-field="true" name="RenderDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
-            <ui:Toggle label="3D" name="3DToggle" style="width: auto;" />
-            <ui:Slider picking-mode="Ignore" label="Quality" value="1" high-value="10" focusable="true" show-input-field="true" name="Quality" low-value="0.25" style="width: 80%; display: none;" />
-            <ui:Slider picking-mode="Ignore" label="Sensitivity" value="2" high-value="10" focusable="true" show-input-field="true" name="Sensitivity" low-value="0" style="width: 80%; display: none;" />
             <ui:EnumField label="Optimisation Strategy" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="OptimisationStrategy" />
             <ui:SliderInt picking-mode="Ignore" label="Random Distance" value="15" high-value="100" show-input-field="true" name="RandomDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
             <ui:SliderInt picking-mode="Ignore" label="Randoms Per Frame" value="1" high-value="200" show-input-field="true" name="RandomsPerFrame" low-value="0" direction="Horizontal" style="width: 80%;" />

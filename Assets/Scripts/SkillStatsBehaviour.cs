@@ -16,7 +16,8 @@ public class SkillStatsBehaviourBaker : Baker<SkillStatsBehaviour>
 {
     public override void Bake(SkillStatsBehaviour authoring)
     {
-        AddComponent(new SkillStatsBehaviourData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new SkillStatsBehaviourData
         {
             Skill = authoring.Skill,
             VisibleStatsChange = authoring.VisibleStatsChange,

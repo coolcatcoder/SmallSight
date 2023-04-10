@@ -13,7 +13,8 @@ public class MouseBlockMarkerBaker : Baker<MouseBlockMarker>
 {
     public override void Bake(MouseBlockMarker authoring)
     {
-        AddComponent(new MouseBlockMarkerData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new MouseBlockMarkerData
         {
         });
     }

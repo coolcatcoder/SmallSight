@@ -22,7 +22,8 @@ public class PlayerBaker : Baker<Player>
 {
     public override void Bake(Player authoring)
     {
-        AddComponent(new PlayerData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new PlayerData
         {
             SecondsUntilHoldMovement = authoring.SecondsUntilHoldMovement,
             HeldMovementDelay = authoring.HeldMovementDelay,

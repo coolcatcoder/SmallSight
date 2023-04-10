@@ -14,9 +14,10 @@ public class OneTimePerksBaker : Baker<OneTimePerks>
 {
     public override void Bake(OneTimePerks authoring)
     {
+        var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.Perks != null)
         {
-            var FeatureBuffer = AddBuffer<OneTimePerkElement>();
+            var FeatureBuffer = AddBuffer<OneTimePerkElement>(entity);
             for (int i = 0; i < authoring.Perks.Length; i++)
             {
                 FeatureBuffer.Add(new OneTimePerkElement

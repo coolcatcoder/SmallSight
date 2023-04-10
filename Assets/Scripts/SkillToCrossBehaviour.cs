@@ -14,7 +14,8 @@ public class SkillToCrossBehaviourBaker : Baker<SkillToCrossBehaviour>
 {
     public override void Bake(SkillToCrossBehaviour authoring)
     {
-        AddComponent(new SkillToCrossBehaviourData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new SkillToCrossBehaviourData
         {
             Skill = authoring.Skill
         });

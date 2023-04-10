@@ -10,7 +10,8 @@ public class AddToWorldBaker : Baker<AddToWorld>
 {
     public override void Bake(AddToWorld authoring)
     {
-        AddComponent(new AddToWorldData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new AddToWorldData
         {
             WorldIndex = authoring.WorldIndex
         });

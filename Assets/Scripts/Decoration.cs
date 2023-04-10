@@ -16,7 +16,8 @@ public class DecorationBaker : Baker<Decoration>
 {
     public override void Bake(Decoration authoring)
     {
-        AddComponent(new DecorationData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new DecorationData
         {
             MinPos = authoring.MinPos,
             MaxPos = authoring.MaxPos,

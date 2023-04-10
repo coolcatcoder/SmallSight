@@ -14,7 +14,8 @@ public class DefaultBiomeBaker : Baker<DefaultBiome>
 {
     public override void Bake(DefaultBiome authoring)
     {
-        AddComponent(new DefaultBiomeData
+        var entity = GetEntity(TransformUsageFlags.None);
+        AddComponent(entity, new DefaultBiomeData
         {
             WorldIndex = authoring.WorldIndex
         });

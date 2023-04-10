@@ -20,23 +20,24 @@ public class BiomeBaker : Baker<Biome>
 {
     public override void Bake(Biome authoring)
     {
+        var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.Features != null)
         {
-            AddComponent(new BiomeData
+            AddComponent(entity, new BiomeData
             {
                 BiomeName = authoring.BiomeName,
                 ExtraTerrainNoiseScale = authoring.ExtraTerrainNoiseScale,
-                ColourSpawn = authoring.ColourSpawn,
+                ColourSpawn = new float3(authoring.ColourSpawn.r,authoring.ColourSpawn.g,authoring.ColourSpawn.b)*2-1,
                 MaxDistance = authoring.MaxDistance,
                 WorldIndex = authoring.WorldIndex
             });
 
-            var FeatureBuffer = AddBuffer<BiomeFeature>();
+            var FeatureBuffer = AddBuffer<BiomeFeature>(entity);
             for (int i = 0; i < authoring.Features.Length; i++)
             {
                 FeatureBuffer.Add(new BiomeFeature
                 {
-                    FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab),
+                    FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab, TransformUsageFlags.Dynamic),
                     PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
                     //Danger = authoring.Features[i].Danger,
                     IsTerrain = authoring.Features[i].IsTerrain,
@@ -54,7 +55,7 @@ public struct BiomeData : IComponentData
     public int WorldIndex;
     public float ExtraTerrainNoiseScale;
 
-    public Color ColourSpawn;
+    public float3 ColourSpawn;
     public float MaxDistance;
 }
 

@@ -14,9 +14,10 @@ public class PerksBaker : Baker<Perks>
 {
     public override void Bake(Perks authoring)
     {
+        var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.MultiUsePerks != null)
         {
-            var FeatureBuffer = AddBuffer<PerkElement>();
+            var FeatureBuffer = AddBuffer<PerkElement>(entity);
             for (int i = 0; i < authoring.MultiUsePerks.Length; i++)
             {
                 FeatureBuffer.Add(new PerkElement

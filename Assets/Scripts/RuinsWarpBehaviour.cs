@@ -14,7 +14,8 @@ public class RuinsWarpBehaviourBaker : Baker<RuinsWarpBehaviour>
 {
     public override void Bake(RuinsWarpBehaviour authoring)
     {
-        AddComponent(new RuinsWarpBehaviourData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new RuinsWarpBehaviourData
         {
             RuinPos = authoring.RuinPos
         });

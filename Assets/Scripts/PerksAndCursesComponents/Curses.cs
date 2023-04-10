@@ -14,9 +14,10 @@ public class CursesBaker : Baker<Curses>
 {
     public override void Bake(Curses authoring)
     {
+        var entity = GetEntity(TransformUsageFlags.None);
         if (authoring.MultiUseCurses != null)
         {
-            var FeatureBuffer = AddBuffer<CurseElement>();
+            var FeatureBuffer = AddBuffer<CurseElement>(entity);
             for (int i = 0; i < authoring.MultiUseCurses.Length; i++)
             {
                 FeatureBuffer.Add(new CurseElement

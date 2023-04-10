@@ -25,7 +25,8 @@ public class BlockBaker : Baker<Block>
 {
     public override void Bake(Block authoring)
     {
-        AddComponent(new BlockData
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new BlockData
         {
             StrengthToWalkOn = authoring.StrengthToWalkOn,
             VisibleStatsChange = authoring.VisibleStatsChange,
@@ -42,13 +43,13 @@ public class BlockBaker : Baker<Block>
 
         if (authoring.Decorations != null)
         {
-            var DecorationBuffer = AddBuffer<DecorationElement>();
+            var DecorationBuffer = AddBuffer<DecorationElement>(entity);
 
             for (int i = 0; i < authoring.Decorations.Length; i++)
             {
                 DecorationBuffer.Add(new DecorationElement
                 {
-                    DecorationEntity = GetEntity(authoring.Decorations[i])
+                    DecorationEntity = GetEntity(authoring.Decorations[i], TransformUsageFlags.Dynamic)
                 });
             }
         }

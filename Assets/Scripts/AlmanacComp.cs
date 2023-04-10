@@ -25,7 +25,8 @@ public class AlmanacBaker : Baker<AlmanacComp>
 {
     public override void Bake(AlmanacComp authoring)
     {
-        AddComponent(new AlmanacData
+        var entity = GetEntity(TransformUsageFlags.None);
+        AddComponent(entity, new AlmanacData
         {
             BelongsTo = authoring.BelongsTo
         });
@@ -34,7 +35,7 @@ public class AlmanacBaker : Baker<AlmanacComp>
         {
             Texture2D[] Icons = new Texture2D[authoring.Pages.Length];
 
-            var PageBuffer = AddBuffer<PageElement>();
+            var PageBuffer = AddBuffer<PageElement>(entity);
 
             for (int i = 0; i < authoring.Pages.Length; i++)
             {
@@ -50,7 +51,7 @@ public class AlmanacBaker : Baker<AlmanacComp>
                 }
             }
 
-            AddComponentObject(new ManagedIconData
+            AddComponentObject(entity, new ManagedIconData
             {
                 Icons = Icons
             });

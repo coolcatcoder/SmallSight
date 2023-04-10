@@ -33,7 +33,7 @@ public class MapMakerBaker : Baker<MapMaker>
 {
     public override void Bake(MapMaker authoring)
     {
-        AddComponent(new MapData
+        AddComponent(GetEntity(TransformUsageFlags.None),new MapData
         {
             MaxBlocks = authoring.MaxBlocks,
             MaxSeed = authoring.MaxSeed,
@@ -45,16 +45,14 @@ public class MapMakerBaker : Baker<MapMaker>
             MinTeleportBounds = authoring.MinTeleportBounds,
             WorldIndex = authoring.WorldIndex,
             BlockBatchSize = authoring.BlockBatchSize,
-            ColourMarker = GetEntity(authoring.ColourMarker)
+            ColourMarker = GetEntity(authoring.ColourMarker, TransformUsageFlags.Dynamic)
         });
     }
 }
 
+[ChunkSerializable] //weird
 public struct MapData : IComponentData
 {
-    //public NativeHashMap<int2, Entity> GeneratedBlocks2D;
-    //public NativeHashMap<int3, Entity> GeneratedBlocks3D;
-
     public int MaxBlocks;
 
     public uint Seed;
@@ -132,8 +130,6 @@ public struct TilemapData : IComponentData
 {
     public NativeHashMap<int2, Entity> TilemapManager;
     public NativeParallelHashMap<int2, Entity> ParallelTilemapManager; //experimental
-
-    public EntityCommandBuffer BlockGenerationECB;
 }
 
 
@@ -1722,9 +1718,6 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
     public void OnStopRunning(ref SystemState state)
     {
-        ref TilemapData TilemapInfo = ref SystemAPI.GetSingletonRW<TilemapData>().ValueRW;
-        TilemapInfo.TilemapManager.Dispose();
-        //TilemapInfo.ParallelTilemapManager.Dispose();
     }
 
     public void OnDestroy(ref SystemState state)
@@ -1737,19 +1730,26 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     {
         int BlocksToSearch = GenerationThickness * GenerationThickness;
 
-        NativeList<BlockGenerator> BlocksToGenerate = new NativeList<BlockGenerator>(BlocksToSearch, Allocator.Persistent);
+        NativeArray<int2> BlockPositions = new NativeArray<int2>(BlocksToSearch, Allocator.Persistent);
+        NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlocksToSearch, Allocator.Persistent);
 
-        var FindBlocks = new FindBlocksJob()
+        NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlocksToSearch, Allocator.Persistent);
+        //dispose native containers above using dispose(JobHandle)!!
+
+        var FindBlocks = new FindBlocksJob() // done
         {
-            Blocks = BlocksToGenerate.AsParallelWriter(),
-            BlockHashMap = TilemapInfo.TilemapManager,
+            BlockPositions = BlockPositions,
+            TilemapManager = TilemapInfo.TilemapManager,
             GenerationPos = CenterPosition,
             GenerationThickness = GenerationThickness
         };
 
-        var GetBiomeNoise = new GetBiomeNoiseJob()
+        var GetBiomeNoise = new GetBiomeNoiseJob() //done
         {
-
+            BlockPositions = BlockPositions,
+            BlockBiomeNoise = BlockBiomeNoise,
+            BiomeNoiseScale = MapInfo.BiomeNoiseScale,
+            BiomeSeed = MapInfo.BiomeSeed
         };
 
         //var GetBiomes = new GetBiomesJob()
@@ -1759,7 +1759,10 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var GetNoise = new GetNoiseJob()
         {
-
+            BlockPositions = BlockPositions,
+            BlockTerrainNoise = BlockTerrainNoise,
+            Seed = MapInfo.Seed,
+            TerrainNoiseScale = MapInfo.TerrainNoiseScale
         };
 
         //var GenerateBlocks = new GenerateBlocksJob()
@@ -1774,8 +1777,13 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         //};
 
+        //var DisposeArrays = new DisposeArraysJob()
+        //{
+
+        //};
+
         var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
-        //var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(FindBlocksHandle);
+        var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
         //var GetBiomesHandle = GetBiomes.ScheduleParallel(GetBiomeNoiseHandle);
         //var GetNoiseHandle = GetNoise.ScheduleParallel(GetBiomesHandle);
         //var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(GetNoiseHandle); // this might have to not be parallel depending on what is faster
@@ -1840,20 +1848,25 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     struct FindBlocksJob : IJobFor
     {
         [WriteOnly]
-        public NativeList<BlockGenerator>.ParallelWriter Blocks;
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int2> BlockPositions;
+
         [ReadOnly]
-        public NativeHashMap<int2, Entity> BlockHashMap;
+        public NativeHashMap<int2, Entity> TilemapManager;
+
         [ReadOnly]
         public int2 GenerationPos;
+
         [ReadOnly]
         public int GenerationThickness;
+
         public void Execute(int i)
         {
             int2 Pos = IndexTo2DPos(i, GenerationThickness) + GenerationPos - new int2(GenerationThickness, GenerationThickness) / 2;
 
-            if (!BlockHashMap.ContainsKey(Pos))
+            if (!TilemapManager.ContainsKey(Pos))
             {
-                Blocks.AddNoResize(new BlockGenerator() { Position=Pos });
+                BlockPositions[i] = Pos;
             }
         }
 
@@ -1866,12 +1879,25 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     [BurstCompile]
     struct GetBiomeNoiseJob : IJobFor
     {
-        public void Execute(int index)
+        [ReadOnly]
+        public NativeArray<int2> BlockPositions;
+
+        [WriteOnly]
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float3> BlockBiomeNoise; // The plural of "noise" is "noises" but the plural of "biome noise" is not "biome noises"??????
+
+        [ReadOnly]
+        public float BiomeNoiseScale;
+
+        [ReadOnly]
+        public float3 BiomeSeed;
+
+        public void Execute(int i)
         {
-            throw new System.NotImplementedException();
+            BlockBiomeNoise[i] = GetBiomeColour(BiomeSeed, BiomeNoiseScale, BlockPositions[i]);
         }
 
-        public static float4 GetBiomeColour2D(float3 BiomeSeed, float BiomeNoiseScale, int2 Pos)
+        public static float3 GetBiomeColour(float3 BiomeSeed, float BiomeNoiseScale, int2 Pos)
         {
             float2 SeededPos1 = Pos;
             SeededPos1.x += BiomeSeed.x;
@@ -1883,16 +1909,36 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             SeededPos3.x += BiomeSeed.z;
 
             // okay in the biome colour thingies during baking for each axis do *2-1 to get the colours to be float4 in the range of -1 to 1
-            return new float4(noise.snoise(SeededPos1 * BiomeNoiseScale), noise.snoise(SeededPos2 * BiomeNoiseScale), noise.snoise(SeededPos3 * BiomeNoiseScale),0);
+            return new float3(noise.snoise(SeededPos1 * BiomeNoiseScale), noise.snoise(SeededPos2 * BiomeNoiseScale), noise.snoise(SeededPos3 * BiomeNoiseScale));
         }
     }
 
     [BurstCompile]
     struct GetNoiseJob : IJobFor
     {
-        public void Execute(int index)
+        [ReadOnly]
+        public NativeArray<int2> BlockPositions;
+
+        [WriteOnly]
+        [NativeDisableParallelForRestriction]
+        public NativeArray<float> BlockTerrainNoise;
+
+        [ReadOnly]
+        public uint Seed;
+
+        [ReadOnly]
+        public float TerrainNoiseScale;
+
+        public void Execute(int i)
         {
-            throw new System.NotImplementedException();
+            BlockTerrainNoise[i] = GetNoise(BlockPositions[i], Seed, TerrainNoiseScale, 0); //replace 0 with however I'm doing the biomes!
+        }
+
+        public static float GetNoise(int2 Pos, uint Seed, float TerrainNoiseScale, float ExtraTerrainNoiseScale)
+        {
+            float2 SeededPos = Pos;
+            SeededPos.x += Seed;
+            return noise.snoise(SeededPos * (TerrainNoiseScale + ExtraTerrainNoiseScale));
         }
     }
 
@@ -1990,7 +2036,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         [WriteOnly]
         public NativeHashMap<int2, Entity> GeneratedBlocks;
 
-        void Execute(ref AddToWorldData BlockInfo, ref WorldTransform BlockTransform, Entity entity)
+        void Execute(ref AddToWorldData BlockInfo, ref LocalToWorld BlockTransform, Entity entity)
         {
             if (BlockInfo.WorldIndex == WorldIndex)
             {

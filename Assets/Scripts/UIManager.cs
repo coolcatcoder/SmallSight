@@ -16,7 +16,7 @@ public partial class UIManager : SystemBase
     protected override void OnCreate()
     {
         RequireForUpdate<PlayerData>();
-        //RequireForUpdate<MapData>(); impossible
+        RequireForUpdate<MapData>();
         RequireForUpdate<MouseBlockMarkerData>();
     }
 
@@ -311,78 +311,40 @@ public partial class UIManager : SystemBase
         PlayerInfo.HeldMovementDelay = root.Q<Slider>("DelayBetween").value;
         PlayerInfo.MinInputDetected = root.Q<Slider>("MinInputDetected").value;
         PlayerInfo.GenerationThickness = root.Q<SliderInt>("RenderDistance").value;
-        PlayerInfo.CameraSensitivity = root.Q<Slider>("Sensitivity").value;
-        PlayerInfo.RandomDistance = root.Q<SliderInt>("RandomDistance").value;
-        PlayerInfo.RandomsPerFrame = root.Q<SliderInt>("RandomsPerFrame").value;
 
-        bool Toggle3DValue = root.Q<Toggle>("3DToggle").value;
+        ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
 
-        if (SystemAPI.HasSingleton<MapData>())
+        MapInfo.OptimisationTechnique = (Optimisation)root.Q<EnumField>("OptimisationStrategy").value;
+        MapInfo.DebugStuff = (DebugFeatures)root.Q<EnumField>("DebugFeatures").value;
+
+        root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.None;
+        root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.None;
+
+        root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.None;
+        root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.None;
+
+        switch (MapInfo.OptimisationTechnique)
         {
-            ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+            case Optimisation.None:
+                break;
 
-            MapInfo.Quality = root.Q<Slider>("Quality").value;
+            case Optimisation.Random:
+                root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.Flex;
+                root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.Flex;
 
-            MapInfo.OptimisationTechnique = (Optimisation)root.Q<EnumField>("OptimisationStrategy").value;
-            MapInfo.DebugStuff = (DebugFeatures)root.Q<EnumField>("DebugFeatures").value;
+                PlayerInfo.RandomDistance = root.Q<SliderInt>("RandomDistance").value;
+                PlayerInfo.RandomsPerFrame = root.Q<SliderInt>("RandomsPerFrame").value;
+                break;
 
-            root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.None;
-            root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.None;
+            case Optimisation.Spiral:
+                root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.Flex;
+                root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.Flex;
 
-            root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.None;
-            root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.None;
-
-            switch (MapInfo.OptimisationTechnique)
-            {
-                case Optimisation.None:
-                    break;
-
-                case Optimisation.Random:
-                    root.Q<SliderInt>("RandomDistance").style.display = DisplayStyle.Flex;
-                    root.Q<SliderInt>("RandomsPerFrame").style.display = DisplayStyle.Flex;
-                    break;
-
-                case Optimisation.Spiral:
-                    root.Q<SliderInt>("BlocksPerFrame").style.display = DisplayStyle.Flex;
-                    root.Q<SliderInt>("MaxFrames").style.display = DisplayStyle.Flex;
-
-                    MapInfo.MaxBlocksToSpiral = root.Q<SliderInt>("MaxFrames").value;
-                    MapInfo.BlocksToSpiral = root.Q<SliderInt>("BlocksPerFrame").value;
-                    break;
-            }
-
-            if (Toggle3DValue != MapInfo.Is3D)
-            {
-                MapInfo.Is3D = Toggle3DValue;
-                    
-
-                if (MapInfo.Is3D)
-                {
-                    Debug.Log("Getting rid of the old 2d stuff!");
-
-                    MapInfo.RandomiseSeeds();
-                    MapInfo.GeneratedBlocks2D.Clear();
-
-                    EntityManager.DestroyEntity(MapInfo.ResetQuery);
-
-                    root.Q<Slider>("Quality").style.display = DisplayStyle.Flex;
-                    root.Q<Slider>("Sensitivity").style.display = DisplayStyle.Flex;
-                }
-                else
-                {
-                    Debug.Log("Getting rid of the old 3d stuff!");
-
-                    MapInfo.RandomiseSeeds();
-                    MapInfo.GeneratedBlocks3D.Clear();
-
-                    EntityManager.DestroyEntity(MapInfo.ResetQuery);
-
-                    root.Q<Slider>("Quality").style.display = DisplayStyle.None;
-                    root.Q<Slider>("Sensitivity").style.display = DisplayStyle.None;
-                }
-
-            }
+                MapInfo.MaxBlocksToSpiral = root.Q<SliderInt>("MaxFrames").value;
+                MapInfo.BlocksToSpiral = root.Q<SliderInt>("BlocksPerFrame").value;
+                break;
         }
+        
     }
 
     #endregion
