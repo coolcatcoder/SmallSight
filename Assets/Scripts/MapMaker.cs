@@ -9,7 +9,7 @@ using UnityEngine;
 
 public class MapMaker : MonoBehaviour
 {
-    public int MaxBlocks;
+    public int2 TilemapSize;
     public uint MaxSeed;
 
     public float3 MinBiomeSeed;
@@ -19,8 +19,8 @@ public class MapMaker : MonoBehaviour
 
     public float TerrainNoiseScale;
 
-    public int3 MaxTeleportBounds;
-    public int3 MinTeleportBounds;
+    public int2 MaxTeleportBounds;
+    public int2 MinTeleportBounds;
 
     public int WorldIndex = 0;
 
@@ -35,7 +35,7 @@ public class MapMakerBaker : Baker<MapMaker>
     {
         AddComponent(GetEntity(TransformUsageFlags.None),new MapData
         {
-            MaxBlocks = authoring.MaxBlocks,
+            TilemapSize = authoring.TilemapSize,
             MaxSeed = authoring.MaxSeed,
             MinBiomeSeed = authoring.MinBiomeSeed,
             MaxBiomeSeed = authoring.MaxBiomeSeed,
@@ -53,7 +53,7 @@ public class MapMakerBaker : Baker<MapMaker>
 [ChunkSerializable] //weird
 public struct MapData : IComponentData
 {
-    public int MaxBlocks;
+    public int2 TilemapSize;
 
     public uint Seed;
     public uint MaxSeed;
@@ -66,8 +66,8 @@ public struct MapData : IComponentData
 
     public float TerrainNoiseScale;
 
-    public int3 MaxTeleportBounds;
-    public int3 MinTeleportBounds;
+    public int2 MaxTeleportBounds;
+    public int2 MinTeleportBounds;
 
     public Unity.Mathematics.Random RandStruct;
 
@@ -78,8 +78,6 @@ public struct MapData : IComponentData
 
     public bool Is3D;
     public float Quality;
-
-    public EntityQuery ResetQuery;
 
     public int BlockBatchSize;
 
@@ -95,43 +93,12 @@ public struct MapData : IComponentData
     public int MaxBlocksToSpiral;
 
     public bool HasMoved;
-
-    public EntityQuery RemoveAddToTilemapManagerQuery;
 }
 
-//public struct MapDataWithoutBlocks : IComponentData
-//{
-//    public int MaxBlocks;
-
-//    public uint Seed;
-//    public uint MaxSeed;
-
-//    public float3 MinBiomeSeed;
-//    public float3 MaxBiomeSeed;
-
-//    public float3 BiomeSeed;
-//    public float BiomeNoiseScale;
-
-//    public float TerrainNoiseScale;
-
-//    public int3 MaxTeleportBounds;
-//    public int3 MinTeleportBounds;
-
-//    public Unity.Mathematics.Random RandStruct;
-
-//    public bool RestartGame;
-
-//    public int WorldIndex;
-
-//    public int BlockBatchSize;
-
-//    public Entity ColourMarker;
-//}
-
-public struct TilemapData : IComponentData
+public struct GridCell
 {
-    public NativeHashMap<int2, Entity> TilemapManager;
-    public NativeParallelHashMap<int2, Entity> ParallelTilemapManager; //experimental
+    public Entity CellEntity;
+    public bool Generated;
 }
 
 public struct AddToTilemapManager : IComponentData
@@ -1672,11 +1639,16 @@ public struct BlockGeneratorColourDebug
 [UpdateAfter(typeof(BeginInitializationEntityCommandBufferSystem))]
 public partial struct Map2DStart : ISystem, ISystemStartStop
 {
+    EntityQuery RemoveAddToTilemapManagerQuery;
+    EntityQuery ResetQuery;
+    NativeArray<GridCell> TilemapManager;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<MapData>();
         state.RequireForUpdate<PlayerData>();
+        state.RequireForUpdate<BiomeData>();
     }
 
     [BurstCompile]
@@ -1685,21 +1657,18 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
 
         Entity MapEntity = SystemAPI.GetSingletonEntity<MapData>();
-        state.EntityManager.AddComponent<TilemapData>(MapEntity);
 
-        ref TilemapData TilemapInfo = ref SystemAPI.GetSingletonRW<TilemapData>().ValueRW;
-
-        TilemapInfo.TilemapManager = new NativeHashMap<int2, Entity>(MapInfo.MaxBlocks, Allocator.Persistent);
+        TilemapManager = new NativeArray<GridCell>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
         //TilemapInfo.ParallelTilemapManager = new NativeParallelHashMap<int2, Entity>(MapInfo.MaxBlocks, Allocator.Persistent);
 
         MapInfo.RandomiseSeeds();
 
-        MapInfo.ResetQuery = new EntityQueryBuilder(Allocator.Temp)
-                .WithAllRW<DestroyOnRestartData>()
+        RemoveAddToTilemapManagerQuery = new EntityQueryBuilder(Allocator.Temp)
+                .WithAllRW<AddToTilemapManager>()
                 .Build(ref state);
 
-        MapInfo.RemoveAddToTilemapManagerQuery = new EntityQueryBuilder(Allocator.Temp)
-                .WithAllRW<AddToTilemapManager>()
+        ResetQuery = new EntityQueryBuilder(Allocator.Temp)
+                .WithAllRW<DestroyOnRestartData>()
                 .Build(ref state);
 
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
@@ -1707,27 +1676,14 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
     }
 
-    [BurstCompile]
+    //[BurstCompile] fix this asap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public void OnUpdate(ref SystemState state)
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
-        ref TilemapData TilemapInfo = ref SystemAPI.GetSingletonRW<TilemapData>().ValueRW;
-
-        var AddECBBlocks = new AddECBBlocksJob()
-        {
-            TilemapManager = TilemapInfo.TilemapManager
-        };
-        AddECBBlocks.Schedule(new JobHandle()).Complete();
-
-        //state.EntityManager.RemoveComponent<AddToTilemapManager>(new EntityQueryBuilder(Allocator.Temp)
-        //    .WithAllRW<AddToTilemapManager>()
-        //    .Build(ref state));
-
-        state.EntityManager.RemoveComponent<AddToTilemapManager>(MapInfo.RemoveAddToTilemapManagerQuery);
 
         if (MapInfo.RestartGame)
         {
-            RestartGame(ref MapInfo, ref TilemapInfo, ref state);
+            RestartGame(ref MapInfo, ref state);
         }
 
         PlayerData PlayerInfo = SystemAPI.GetSingleton<PlayerData>();
@@ -1736,12 +1692,14 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         if (MapInfo.HasMoved || MapInfo.RestartGame)
         {
             Debug.Log("moved or restarted");
-            //GenerateBlocks(ref state, ref MapInfo, ref TilemapInfo, PlayerInfo.GenerationThickness, PlayerPos);
+            GenerateBlocks(ref state, ref MapInfo, PlayerInfo.GenerationThickness, PlayerPos);
         }
     }
 
+    [BurstCompile]
     public void OnStopRunning(ref SystemState state)
     {
+        TilemapManager.Dispose();
     }
 
     public void OnDestroy(ref SystemState state)
@@ -1749,15 +1707,17 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
     }
 
-    [BurstCompile]
-    public void GenerateBlocks(ref SystemState state, ref MapData MapInfo, ref TilemapData TilemapInfo, int GenerationThickness, int2 CenterPosition)
+    //[BurstCompile]
+    public void GenerateBlocks(ref SystemState state, ref MapData MapInfo, int GenerationThickness, int2 CenterPosition)
     {
         int BlocksToSearch = GenerationThickness * GenerationThickness;
 
         NativeArray<int2> BlockPositions = new NativeArray<int2>(BlocksToSearch, Allocator.Persistent);
         NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlocksToSearch, Allocator.Persistent);
         NativeArray<BiomeData> BlockBiomes = new NativeArray<BiomeData>(BlocksToSearch, Allocator.Persistent);
+        NativeArray<BlobAssetReference<BiomeFeatureBlobPool>> BlockBiomeBlobs = new NativeArray<BlobAssetReference<BiomeFeatureBlobPool>>(BlocksToSearch, Allocator.Persistent);
         NativeReference<BiomeData> DefaultBiome = new NativeReference<BiomeData>(Allocator.Persistent);
+        NativeReference<BlobAssetReference<BiomeFeatureBlobPool>> DefaultBiomeBlob = new NativeReference<BlobAssetReference<BiomeFeatureBlobPool>>(Allocator.Persistent);
         NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlocksToSearch, Allocator.Persistent);
         NativeList<int2> EmptySpaces = new NativeList<int2>(BlocksToSearch, Allocator.Persistent); // there should never be 100% empty space, but weird stuff happens sometimes
         //dispose native containers above using dispose(JobHandle)!!
@@ -1765,7 +1725,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         var FindBlocks = new FindBlocksJob() // done
         {
             BlockPositions = BlockPositions,
-            TilemapManager = TilemapInfo.TilemapManager,
+            TilemapManager = TilemapManager,
             GenerationPos = CenterPosition,
             GenerationThickness = GenerationThickness
         };
@@ -1782,6 +1742,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         {
             BlockBiomeNoise = BlockBiomeNoise,
             BlockBiomes = BlockBiomes,
+            BlockBiomeBlobs = BlockBiomeBlobs,
             WorldIndex = MapInfo.WorldIndex,
             BlockQuantity = BlocksToSearch
         };
@@ -1789,7 +1750,8 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         var GetDefaultBiome = new GetDefaultBiomeJob()
         {
             WorldIndex = MapInfo.WorldIndex,
-            Biome = DefaultBiome
+            Biome = DefaultBiome,
+            BlockBiomeBlob = DefaultBiomeBlob
         };
 
         var GetNoise = new GetNoiseJob()
@@ -1800,47 +1762,63 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             TerrainNoiseScale = MapInfo.TerrainNoiseScale
         };
 
-        var GenerateBlocks = new GenerateBlocksJob()
-        {
-            DefaultBiome = DefaultBiome.Value,
-            ECB = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
-            RandStruct = MapInfo.RandStruct,
-            BlockBiomes = BlockBiomes,
-            BlockTerrainNoise = BlockTerrainNoise,
-            BlockPositions = BlockPositions,
-            EmptySpaces = EmptySpaces.AsParallelWriter()
-        };
+        //var GenerateBlocks = new GenerateBlocksJob()
+        //{
+        //    DefaultBiome = DefaultBiome.Value,
+        //    DefaultBiomeBlob = DefaultBiomeBlob.Value,
+        //    ECB = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+        //    RandStruct = MapInfo.RandStruct,
+        //    BlockBiomes = BlockBiomes,
+        //    BlockBiomeBlobs = BlockBiomeBlobs,
+        //    BlockTerrainNoise = BlockTerrainNoise,
+        //    BlockPositions = BlockPositions,
+        //    EmptySpaces = EmptySpaces.AsParallelWriter()
+        //};
 
-        var AddEmptyBlocksToHash = new AddEmptyBlocksToHashJob()
-        {
-            EmptySpaces = EmptySpaces,
-            TilemapManager = TilemapInfo.TilemapManager
-        };
+        //var AddEmptyBlocksToHash = new AddEmptyBlocksToHashJob()
+        //{
+        //    EmptySpaces = EmptySpaces,
+        //    TilemapManager = TilemapInfo.TilemapManager
+        //};
 
         var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
         var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
         var GetBiomesHandle = GetBiomes.Schedule(GetBiomeNoiseHandle); // no parallel sadly....
         var GetDefaultBiomeHandle = GetDefaultBiome.ScheduleParallel(GetBiomesHandle);
         var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetDefaultBiomeHandle);
-        var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetNoiseHandle);
-        var AddEmptyBlocksToHashHandle = AddEmptyBlocksToHash.Schedule(GenerateBlocksHandle);
+        //var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetNoiseHandle);
+        //var AddEmptyBlocksToHashHandle = AddEmptyBlocksToHash.Schedule(GenerateBlocksHandle);
 
-        BlockPositions.Dispose(AddEmptyBlocksToHashHandle);
-        BlockBiomeNoise.Dispose(AddEmptyBlocksToHashHandle);
-        BlockBiomes.Dispose(AddEmptyBlocksToHashHandle);
-        DefaultBiome.Dispose(AddEmptyBlocksToHashHandle);
-        BlockTerrainNoise.Dispose(AddEmptyBlocksToHashHandle);
-        EmptySpaces.Dispose(AddEmptyBlocksToHashHandle);
+        //BlockPositions.Dispose(AddEmptyBlocksToHashHandle);
+        //BlockBiomeNoise.Dispose(AddEmptyBlocksToHashHandle);
+        //BlockBiomes.Dispose(AddEmptyBlocksToHashHandle);
+        //BlockBiomeBlobs.Dispose(AddEmptyBlocksToHashHandle);
+        //DefaultBiome.Dispose(AddEmptyBlocksToHashHandle);
+        //DefaultBiomeBlob.Dispose(AddEmptyBlocksToHashHandle);
+        //BlockTerrainNoise.Dispose(AddEmptyBlocksToHashHandle);
+        //EmptySpaces.Dispose(AddEmptyBlocksToHashHandle);
     }
 
     [BurstCompile]
-    public void RestartGame(ref MapData MapInfo, ref TilemapData TilemapInfo, ref SystemState state)
+    public static int PosToIndex(int2 Pos, int GridWidth)
+    {
+        return Pos.y * GridWidth + Pos.x;
+    }
+
+    [BurstCompile]
+    public static int2 IndexToPos(int Index, int GridWidth)
+    {
+        return new int2(Index%GridWidth,Index/GridWidth);
+    }
+
+    [BurstCompile]
+    public void RestartGame(ref MapData MapInfo, ref SystemState state)
     {
         MapInfo.RandomiseSeeds();
-        TilemapInfo.TilemapManager.Clear();
+        TilemapManager.;
         //TilemapInfo.ParallelTilemapManager.Clear();
 
-        state.EntityManager.DestroyEntity(MapInfo.ResetQuery);
+        state.EntityManager.DestroyEntity(ResetQuery);
 
         if (!MapInfo.KeepStats)
         {
@@ -1866,7 +1844,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         UIInfo.UIState = UIStatus.Alive;
         UIInfo.Setup = false;
 
-        SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW.Position.xz = FindSafePos(ref state);
+        //SystemAPI.GetComponentLookup<LocalTransform>().GetRefRW(SystemAPI.GetSingletonEntity<PlayerData>(), false).ValueRW.Position.xz = FindSafePos(ref state);
 
         ref WorldData WorldInfo = ref SystemAPI.GetSingletonBuffer<WorldData>().ElementAt(MapInfo.WorldIndex);
         //RenderSettings.skybox.SetColor("_GroundColor", WorldInfo.BackGround); // do this in a system base
@@ -1876,17 +1854,72 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public int2 FindSafePos(ref SystemState state)
+    public partial struct FixBiomeBlobsJob : IJobEntity
     {
-        throw new System.NotImplementedException();
+        void Execute(ref DynamicBuffer<BiomeFeatureDBElement> BiomeFeaturesDB, ref BiomeData BiomeInfo, Entity entity)
+        {
+            var builder = new BlobBuilder(Allocator.Temp);
+            ref BiomeFeatureBlobPool BiomeFeaturesBlobPoolInfo = ref builder.ConstructRoot<BiomeFeatureBlobPool>();
+
+            BlobBuilderArray<BiomeFeatureBlobElement> arrayBuilder = builder.Allocate(
+                ref BiomeFeaturesBlobPoolInfo.BiomeFeatures,
+                BiomeFeaturesDB.Length
+                );
+
+            // set stuff here in a for loop
+            for (int i = 0; i < BiomeFeaturesDB.Length; i++)
+            {
+                arrayBuilder[i] = new BiomeFeatureBlobElement()
+                {
+                    FeaturePrefab = BiomeFeaturesDB[i].FeaturePrefab,
+                    PercentChanceToSpawn = BiomeFeaturesDB[i].PercentChanceToSpawn,
+                    IsTerrain = BiomeFeaturesDB[i].IsTerrain,
+                    MinNoiseValue = BiomeFeaturesDB[i].MinNoiseValue,
+                    MaxNoiseValue = BiomeFeaturesDB[i].MaxNoiseValue
+                };
+            }
+
+            var blobReference = builder.CreateBlobAssetReference<BiomeFeatureBlobPool>(Allocator.Persistent);
+
+            builder.Dispose();
+
+            //AddBlobAsset(ref blobReference, out var hash); Hope this wasn't important!
+
+            BiomeInfo.BiomeFeaturesBlobAsset = blobReference;
+        }
     }
 
-    public struct BlockGenerator
-    {
-        public int2 Position;
-        public Entity BiomeEntity;
-        public float TerrainNoise;
-    }
+    //[BurstCompile]
+    //public int2 FindSafePos(ref SystemState state, ref MapData MapInfo, ref TilemapData TilemapInfo)
+    //{
+    //    var SafePos = false;
+    //    int2 BPos = new();
+
+    //    while (!SafePos)
+    //    {
+    //        BPos = MapInfo.RandStruct.NextInt2(MapInfo.MinTeleportBounds.xy, MapInfo.MaxTeleportBounds.xy);
+
+    //        BlockGenerator2D BlockGen = new BlockGenerator2D
+    //        {
+    //            Pos = BPos,
+    //            BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(BPos), ref state)
+    //        };
+
+    //        if (!MapInfo.GeneratedBlocks2D.ContainsKey(BPos))
+    //        {
+    //            GenerateBlock2D(BlockGen, ref MapInfo, ref state);
+    //        }
+
+    //        if (MapInfo.GeneratedBlocks2D[BPos] == Entity.Null)
+    //        {
+    //            SafePos = true;
+    //        }
+    //        else if (SystemAPI.GetComponent<BlockData>(MapInfo.GeneratedBlocks2D[BPos]).TeleportSafe)
+    //        {
+    //            SafePos = true;
+    //        }
+    //    }
+    //}
 
     [BurstCompile]
     struct FindBlocksJob : IJobFor
@@ -1896,7 +1929,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         public NativeArray<int2> BlockPositions;
 
         [ReadOnly]
-        public NativeHashMap<int2, Entity> TilemapManager;
+        public NativeArray<GridCell> TilemapManager;
 
         [ReadOnly]
         public int2 GenerationPos;
@@ -1904,20 +1937,23 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         [ReadOnly]
         public int GenerationThickness;
 
+        [ReadOnly]
+        public int GridThickness;
+
         public void Execute(int i)
         {
-            int2 Pos = IndexTo2DPos(i, GenerationThickness) + GenerationPos - new int2(GenerationThickness, GenerationThickness) / 2;
+            int2 Pos = IndexToPos(i, GenerationThickness) + GenerationPos - new int2(GenerationThickness, GenerationThickness) / 2;
 
-            if (!TilemapManager.ContainsKey(Pos))
+            if (!TilemapManager[PosToIndex(Pos,GridThickness)].Generated)
             {
                 BlockPositions[i] = Pos;
             }
         }
 
-        public static int2 IndexTo2DPos(int Index, int GenerationThickness)
-        {
-            return new int2(Index % GenerationThickness, Index / GenerationThickness);
-        }
+        //public static int2 IndexTo2DPos(int Index, int GenerationThickness)
+        //{
+        //    return new int2(Index % GenerationThickness, Index / GenerationThickness);
+        //}
     }
 
     [BurstCompile]
@@ -1966,6 +2002,9 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         [WriteOnly]
         public NativeArray<BiomeData> BlockBiomes;
 
+        [WriteOnly]
+        public NativeArray<BlobAssetReference<BiomeFeatureBlobPool>> BlockBiomeBlobs;
+
         [ReadOnly]
         public int WorldIndex;
 
@@ -1981,6 +2020,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                     if (math.distancesq(Biome.ColourSpawn, BlockBiomeNoise[i]) <= Biome.MaxDistance)
                     {
                         BlockBiomes[i] = Biome;
+                        BlockBiomeBlobs[i] = Biome.BiomeFeaturesBlobAsset;
                     }
                 }
             }
@@ -1994,13 +2034,19 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         public int WorldIndex;
 
         [WriteOnly]
+        [NativeDisableParallelForRestriction]
         public NativeReference<BiomeData> Biome;
 
-        void Execute(DefaultBiomeData DefaultBiome, BiomeData BiomeInfo)
+        [WriteOnly]
+        [NativeDisableParallelForRestriction]
+        public NativeReference<BlobAssetReference<BiomeFeatureBlobPool>> BlockBiomeBlob;
+
+        void Execute(DefaultBiomeData DefaultBiome, ref BiomeData BiomeInfo)
         {
             if (DefaultBiome.WorldIndex == WorldIndex)
             {
                 Biome.Value = BiomeInfo;
+                BlockBiomeBlob.Value = BiomeInfo.BiomeFeaturesBlobAsset;
             }
         }
     }
@@ -2034,11 +2080,13 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         }
     }
 
-    [BurstCompile]
+    //[BurstCompile]
     struct GenerateBlocksJob : IJobFor
     {
         [ReadOnly]
         public BiomeData DefaultBiome;
+
+        public BlobAssetReference<BiomeFeatureBlobPool> DefaultBiomeBlob;
 
         public EntityCommandBuffer.ParallelWriter ECB;
 
@@ -2047,6 +2095,9 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         [ReadOnly]
         public NativeArray<BiomeData> BlockBiomes;
+
+        [ReadOnly]
+        public NativeArray<BlobAssetReference<BiomeFeatureBlobPool>> BlockBiomeBlobs;
 
         [ReadOnly]
         public NativeArray<float> BlockTerrainNoise;
@@ -2060,11 +2111,14 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         public void Execute(int i)
         {
             BiomeData Biome = BlockBiomes[i];
+            ref var BiomeFeatures = ref BlockBiomeBlobs[i].Value.BiomeFeatures;
+
             if (!Biome.NotNull)
             {
                 Biome = DefaultBiome;
+                BiomeFeatures = ref DefaultBiomeBlob.Value.BiomeFeatures;
             }
-            ref var BiomeFeatures = ref Biome.BiomeFeaturesBlobAsset.Value.BiomeFeatures;
+            //ref var BiomeFeatures = ref Biome.BiomeFeaturesBlobAsset.Value.BiomeFeatures;
 
             //float BlockNoise = MapInfo.GetNoise2D(BlockGenInfo.Pos, Biome);
 
@@ -2154,7 +2208,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     public partial struct AddECBBlocksJob : IJobEntity
     {
         [WriteOnly]
-        public NativeHashMap<int2, Entity> TilemapManager;
+        public NativeArray<Entity> TilemapManager;
 
         void Execute(AddToTilemapManager AddComp, LocalTransform BlockTransform, Entity BlockEntity)
         {
@@ -2200,6 +2254,11 @@ public partial struct Map2DEnd : ISystem
         if (MapInfo.RestartGame)
         {
             MapInfo.RestartGame = false;
+        }
+
+        if (MapInfo.HasMoved)
+        {
+            MapInfo.HasMoved = false;
         }
     }
 
