@@ -1699,8 +1699,8 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                 .Build(ref state);
 
         MapInfo.RemoveAddToTilemapManagerQuery = new EntityQueryBuilder(Allocator.Temp)
-            .WithAll<AddToTilemapManager>()
-            .Build(ref state);
+                .WithAllRW<AddToTilemapManager>()
+                .Build(ref state);
 
         ref PlayerData PlayerInfo = ref SystemAPI.GetSingletonRW<PlayerData>().ValueRW;
         PlayerInfo.VisibleStats = PlayerInfo.DefaultVisibleStats;
@@ -1715,9 +1715,13 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var AddECBBlocks = new AddECBBlocksJob()
         {
-
+            TilemapManager = TilemapInfo.TilemapManager
         };
         AddECBBlocks.Schedule(new JobHandle()).Complete();
+
+        //state.EntityManager.RemoveComponent<AddToTilemapManager>(new EntityQueryBuilder(Allocator.Temp)
+        //    .WithAllRW<AddToTilemapManager>()
+        //    .Build(ref state));
 
         state.EntityManager.RemoveComponent<AddToTilemapManager>(MapInfo.RemoveAddToTilemapManagerQuery);
 
@@ -1731,7 +1735,8 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         if (MapInfo.HasMoved || MapInfo.RestartGame)
         {
-            GenerateBlocks(ref state, ref MapInfo, ref TilemapInfo, PlayerInfo.GenerationThickness, PlayerPos);
+            Debug.Log("moved or restarted");
+            //GenerateBlocks(ref state, ref MapInfo, ref TilemapInfo, PlayerInfo.GenerationThickness, PlayerPos);
         }
     }
 
@@ -1752,6 +1757,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         NativeArray<int2> BlockPositions = new NativeArray<int2>(BlocksToSearch, Allocator.Persistent);
         NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlocksToSearch, Allocator.Persistent);
         NativeArray<BiomeData> BlockBiomes = new NativeArray<BiomeData>(BlocksToSearch, Allocator.Persistent);
+        NativeReference<BiomeData> DefaultBiome = new NativeReference<BiomeData>(Allocator.Persistent);
         NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlocksToSearch, Allocator.Persistent);
         NativeList<int2> EmptySpaces = new NativeList<int2>(BlocksToSearch, Allocator.Persistent); // there should never be 100% empty space, but weird stuff happens sometimes
         //dispose native containers above using dispose(JobHandle)!!
@@ -1780,6 +1786,12 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             BlockQuantity = BlocksToSearch
         };
 
+        var GetDefaultBiome = new GetDefaultBiomeJob()
+        {
+            WorldIndex = MapInfo.WorldIndex,
+            Biome = DefaultBiome
+        };
+
         var GetNoise = new GetNoiseJob()
         {
             BlockPositions = BlockPositions,
@@ -1790,6 +1802,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var GenerateBlocks = new GenerateBlocksJob()
         {
+            DefaultBiome = DefaultBiome.Value,
             ECB = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
             RandStruct = MapInfo.RandStruct,
             BlockBiomes = BlockBiomes,
@@ -1800,20 +1813,24 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var AddEmptyBlocksToHash = new AddEmptyBlocksToHashJob()
         {
-
+            EmptySpaces = EmptySpaces,
+            TilemapManager = TilemapInfo.TilemapManager
         };
-
-        //var DisposeArrays = new DisposeArraysJob()
-        //{
-
-        //};
 
         var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
         var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
         var GetBiomesHandle = GetBiomes.Schedule(GetBiomeNoiseHandle); // no parallel sadly....
-        var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetBiomesHandle);
+        var GetDefaultBiomeHandle = GetDefaultBiome.ScheduleParallel(GetBiomesHandle);
+        var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetDefaultBiomeHandle);
         var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetNoiseHandle);
         var AddEmptyBlocksToHashHandle = AddEmptyBlocksToHash.Schedule(GenerateBlocksHandle);
+
+        BlockPositions.Dispose(AddEmptyBlocksToHashHandle);
+        BlockBiomeNoise.Dispose(AddEmptyBlocksToHashHandle);
+        BlockBiomes.Dispose(AddEmptyBlocksToHashHandle);
+        DefaultBiome.Dispose(AddEmptyBlocksToHashHandle);
+        BlockTerrainNoise.Dispose(AddEmptyBlocksToHashHandle);
+        EmptySpaces.Dispose(AddEmptyBlocksToHashHandle);
     }
 
     [BurstCompile]
@@ -1966,6 +1983,24 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                         BlockBiomes[i] = Biome;
                     }
                 }
+            }
+        }
+    }
+
+    [BurstCompile]
+    public partial struct GetDefaultBiomeJob : IJobEntity
+    {
+        [ReadOnly]
+        public int WorldIndex;
+
+        [WriteOnly]
+        public NativeReference<BiomeData> Biome;
+
+        void Execute(DefaultBiomeData DefaultBiome, BiomeData BiomeInfo)
+        {
+            if (DefaultBiome.WorldIndex == WorldIndex)
+            {
+                Biome.Value = BiomeInfo;
             }
         }
     }

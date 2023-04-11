@@ -21,7 +21,8 @@ public partial struct CleanUpNativeContainers : ISystem, ISystemStartStop
 
     public void OnStartRunning(ref SystemState state)
     {
-        TilemapManager = SystemAPI.GetSingletonRW<TilemapData>().ValueRW.TilemapManager;
+        ref var TilemapInfo = ref SystemAPI.GetSingletonRW<TilemapData>().ValueRW;
+        TilemapManager = TilemapInfo.TilemapManager;
     }
 
     public void OnStopRunning(ref SystemState state)
