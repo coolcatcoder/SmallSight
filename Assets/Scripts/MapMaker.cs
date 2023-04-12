@@ -2231,9 +2231,16 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 [UpdateAfter(typeof(Map2DStart))]
 public partial class MapMeshSystem : SystemBase
 {
+    NativeArray<VertexAttributeDescriptor> VertexAttributes;
+
     protected override void OnCreate()
     {
         RequireForUpdate<MapData>();
+
+        VertexAttributes = new NativeArray<VertexAttributeDescriptor>(3, Allocator.Persistent);
+        VertexAttributes[0] = new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3);
+        VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 2);
+        VertexAttributes[2] = new VertexAttributeDescriptor(VertexAttribute.Tangent, VertexAttributeFormat.UNorm8, 4);
     }
 
     protected override void OnUpdate()
@@ -2241,36 +2248,84 @@ public partial class MapMeshSystem : SystemBase
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
     }
 
-    public void OnDestroy(ref SystemState state)
+    protected override void OnDestroy()
     {
+        VertexAttributes.Dispose();
+    }
 
+    void CreateMesh(Mesh MeshToSet, int BlockQuantity)
+    {
+        Mesh.MeshData OutputMesh = Mesh.AllocateWritableMeshData(1)[0];
+
+        OutputMesh.SetVertexBufferParams(4 * BlockQuantity, VertexAttributes);
+
+        OutputMesh.SetIndexBufferParams(6 * BlockQuantity, IndexFormat.UInt32);
+
+        OutputMesh.subMeshCount = BlockQuantity;
+    }
+
+    struct Vertex // this has to match the VertexAttributes somehow
+    {
+        public float3 Pos;
+        public float2 uv;
     }
 
     [BurstCompile]
     struct ProcessMeshData : IJobParallelFor
     {
         [ReadOnly]
+        public NativeArray<VertexAttributeDescriptor> VertexAttributes;
+
+        [ReadOnly]
+        public NativeArray<int3> BlockPositions;
+
+        [ReadOnly]
         public Mesh.MeshData MeshInfo;
 
         //WriteOnly???
         public Mesh.MeshData OutputMesh;
 
+        [ReadOnly]
+        public int BlockQuantity;
+
         public void Execute(int i)
         {
-            MeshTopology SubMeshTopology = MeshTopology.Triangles; // 3 vertex indices per face
+            var Vertices = OutputMesh.GetVertexData<Vertex>();
+
+            float3 BlockPosition = BlockPositions[i];
+
+            UnsafeElementAt(Vertices, i * 4).Pos = BlockPosition + new float3(0.5f, 0, 0.5f); // top right
+            UnsafeElementAt(Vertices, i * 4 + 1).Pos = BlockPosition + new float3(0.5f, 0, -0.5f); // top left
+            UnsafeElementAt(Vertices, i * 4 + 2).Pos = BlockPosition + new float3(-0.5f, 0, 0.5f); // bottom right
+            UnsafeElementAt(Vertices, i * 4 + 3).Pos = BlockPosition + new float3(-0.5f, 0, -0.5f); // bottom left
+
+            var Indices = OutputMesh.GetIndexData<int>(); // shouldn't this be uint???
+
+            Indices[i * 6] = i * 4 + 1;
+            Indices[i * 6 + 1] = i * 4;
+            Indices[i * 6 + 2] = i * 4 + 2;
+
+            Indices[i * 6 + 3] = i * 4;
+            Indices[i * 6 + 4] = i * 4 + 2;
+            Indices[i * 6 + 5] = i * 4 + 3;
 
             SubMeshDescriptor SubMeshInfo = new()
             {
-                baseVertex = 0,
+                baseVertex = 0, // for now this is correct, but will be an issue eventually
                 //bounds = SubMeshBounds,
                 //firstVertex = 0,
-                indexCount = 4,
-                indexStart = i*4, //potentially lol
-                topology = SubMeshTopology,
+                indexCount = 6, // 2 triangles with each triangle needing 3
+                indexStart = i*6, //potentially lol
+                topology = MeshTopology.Triangles, // 3 indices per face
                 //vertexCount = 4
             };
 
-            OutputMesh.SetSubMesh(0, SubMeshInfo, MeshUpdateFlags.Default); //replace 0 with something, I don't know yet
+            OutputMesh.SetSubMesh(i, SubMeshInfo, MeshUpdateFlags.Default); //replace i with something, I don't know yet
+        }
+
+        static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct
+        {
+            return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
         }
     }
 }
