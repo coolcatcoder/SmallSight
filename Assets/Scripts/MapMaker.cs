@@ -1,11 +1,13 @@
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class MapMaker : MonoBehaviour
 {
@@ -1642,6 +1644,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     EntityQuery RemoveAddToTilemapManagerQuery;
     EntityQuery ResetQuery;
     NativeArray<GridCell> TilemapManager;
+    Mesh.MeshData TilemapMesh;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -1659,7 +1662,8 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         Entity MapEntity = SystemAPI.GetSingletonEntity<MapData>();
 
         TilemapManager = new NativeArray<GridCell>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
-        //TilemapInfo.ParallelTilemapManager = new NativeParallelHashMap<int2, Entity>(MapInfo.MaxBlocks, Allocator.Persistent);
+
+        TilemapMesh = Mesh.AllocateWritableMeshData(1)[0];
 
         MapInfo.RandomiseSeeds();
 
@@ -1815,10 +1819,10 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     public void RestartGame(ref MapData MapInfo, ref SystemState state)
     {
         MapInfo.RandomiseSeeds();
-        TilemapManager.;
+        unsafe { UnsafeUtility.MemClear(TilemapManager.GetUnsafePtr(), UnsafeUtility.SizeOf<GridCell>() * TilemapManager.Length); }; // acts like .Clear()
         //TilemapInfo.ParallelTilemapManager.Clear();
 
-        state.EntityManager.DestroyEntity(ResetQuery);
+        //TilemapMesh
 
         if (!MapInfo.KeepStats)
         {
@@ -1831,14 +1835,14 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             MapInfo.KeepStats = false;
         }
 
-        AddBlocksJob AddBlocks = new AddBlocksJob
-        {
-            WorldIndex = MapInfo.WorldIndex,
-            GeneratedBlocks = TilemapInfo.TilemapManager
-        };
+        //AddBlocksJob AddBlocks = new AddBlocksJob Fix asap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //{
+        //    WorldIndex = MapInfo.WorldIndex,
+        //    GeneratedBlocks = TilemapManager
+        //};
 
-        state.Dependency = AddBlocks.Schedule(state.Dependency);
-        state.Dependency.Complete();
+        //state.Dependency = AddBlocks.Schedule(state.Dependency);
+        //state.Dependency.Complete();
 
         ref UIData UIInfo = ref SystemAPI.GetSingletonRW<UIData>().ValueRW;
         UIInfo.UIState = UIStatus.Alive;
@@ -2205,18 +2209,6 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public partial struct AddECBBlocksJob : IJobEntity
-    {
-        [WriteOnly]
-        public NativeArray<Entity> TilemapManager;
-
-        void Execute(AddToTilemapManager AddComp, LocalTransform BlockTransform, Entity BlockEntity)
-        {
-            TilemapManager.Add((int2)BlockTransform.Position.xz, BlockEntity);
-        }
-    }
-
-    [BurstCompile]
     public partial struct AddBlocksJob : IJobEntity
     {
         [ReadOnly]
@@ -2231,6 +2223,54 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             {
                 GeneratedBlocks.Add((int2)BlockTransform.Position.xz, entity);
             }
+        }
+    }
+}
+
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateAfter(typeof(Map2DStart))]
+public partial class MapMeshSystem : SystemBase
+{
+    protected override void OnCreate()
+    {
+        RequireForUpdate<MapData>();
+    }
+
+    protected override void OnUpdate()
+    {
+        ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+    }
+
+    public void OnDestroy(ref SystemState state)
+    {
+
+    }
+
+    [BurstCompile]
+    struct ProcessMeshData : IJobParallelFor
+    {
+        [ReadOnly]
+        public Mesh.MeshData MeshInfo;
+
+        //WriteOnly???
+        public Mesh.MeshData OutputMesh;
+
+        public void Execute(int i)
+        {
+            MeshTopology SubMeshTopology = MeshTopology.Triangles; // 3 vertex indices per face
+
+            SubMeshDescriptor SubMeshInfo = new()
+            {
+                baseVertex = 0,
+                //bounds = SubMeshBounds,
+                //firstVertex = 0,
+                indexCount = 4,
+                indexStart = i*4, //potentially lol
+                topology = SubMeshTopology,
+                //vertexCount = 4
+            };
+
+            OutputMesh.SetSubMesh(0, SubMeshInfo, MeshUpdateFlags.Default); //replace 0 with something, I don't know yet
         }
     }
 }
