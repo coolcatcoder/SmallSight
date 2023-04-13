@@ -33,19 +33,40 @@ public class BiomeBaker : Baker<Biome>
 
                 //BiomeFeaturesBlobAsset = blobReference,
 
-                NotNull = true
+                NotNull = true,
+
+                BiomeRandom = Unity.Mathematics.Random.CreateFromIndex((uint)UnityEngine.Random.Range(0, 3000)) // is 3001 seeds enough?
             });
 
-            var FeatureBuffer = AddBuffer<BiomeFeatureDBElement>(entity);
+            var FeatureBuffer = AddBuffer<BiomeFeatureElement>(entity);
             for (int i = 0; i < authoring.Features.Length; i++)
             {
-                FeatureBuffer.Add(new BiomeFeatureDBElement
+                Block BlockInfo = authoring.Features[i].FeaturePrefab.GetComponent<Block>();
+
+                FeatureBuffer.Add(new BiomeFeatureElement
                 {
-                    FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab, TransformUsageFlags.Dynamic),
+                    //FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab, TransformUsageFlags.Dynamic),
+
                     PercentChanceToSpawn = authoring.Features[i].PercentChanceToSpawn,
                     IsTerrain = authoring.Features[i].IsTerrain,
                     MinNoiseValue = authoring.Features[i].MinNoiseValue,
-                    MaxNoiseValue = authoring.Features[i].MaxNoiseValue
+                    MaxNoiseValue = authoring.Features[i].MaxNoiseValue,
+
+                    StrengthToWalkOn = BlockInfo.StrengthToWalkOn,
+                    ConsumeOnCollision = BlockInfo.ConsumeOnCollision,
+                    TeleportSafe = BlockInfo.TeleportSafe,
+                    YLevel = BlockInfo.YLevel,
+                    DecorationChance = BlockInfo.DecorationChance,
+                    
+                    VisibleStatsChange = BlockInfo.VisibleStatsChange,
+                    HiddenStatsChange = BlockInfo.HiddenStatsChange,
+
+                    Behaviour = BlockInfo.Behaviour,
+
+                    SectionIn = BlockInfo.SectionIn,
+                    PageOn = BlockInfo.PageOn,
+
+                    HasDecorations = BlockInfo.Decorations != null
                 });
             }
         }
@@ -61,34 +82,37 @@ public struct BiomeData : IComponentData
     public float3 ColourSpawn;
     public float MaxDistance;
 
-    public BlobAssetReference<BiomeFeatureBlobPool> BiomeFeaturesBlobAsset;
-
     public bool NotNull;
-}
 
-public struct BiomeFeatureBlobElement
-{
-    public Entity FeaturePrefab;
-    public float PercentChanceToSpawn;
-    public bool IsTerrain;
-    public float MinNoiseValue;
-    public float MaxNoiseValue;
-}
-
-public struct BiomeFeatureBlobPool
-{
-    public BlobArray<BiomeFeatureBlobElement> BiomeFeatures;
+    public Unity.Mathematics.Random BiomeRandom;
 }
 
 [InternalBufferCapacity(0)]
-public struct BiomeFeatureDBElement : IBufferElementData
+public struct BiomeFeatureElement : IBufferElementData
 {
-    public Entity FeaturePrefab;
+    //public Entity FeaturePrefab;
     public float PercentChanceToSpawn;
     //public int Danger;
     public bool IsTerrain;
     public float MinNoiseValue;
     public float MaxNoiseValue;
+
+    //Kidnapped Below
+    public int StrengthToWalkOn;
+    public bool ConsumeOnCollision;
+    public bool TeleportSafe;
+    public float YLevel;
+    public float DecorationChance;
+
+    public float4 VisibleStatsChange;
+    public float4 HiddenStatsChange;
+
+    public SpecialBehaviour Behaviour;
+
+    public AlmanacWorld SectionIn;
+    public int PageOn;
+
+    public bool HasDecorations;
 }
 
 [System.Serializable]
