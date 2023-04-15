@@ -29,9 +29,6 @@ public class MapMaker : MonoBehaviour
     public int BlockBatchSize = 32;
 
     public GameObject ColourMarker;
-
-    public bool EnableSubMeshRendering;
-    public bool DisableSubMeshRendering;
 }
 
 public class MapMakerBaker : Baker<MapMaker>
@@ -50,9 +47,7 @@ public class MapMakerBaker : Baker<MapMaker>
             MinTeleportBounds = authoring.MinTeleportBounds,
             WorldIndex = authoring.WorldIndex,
             BlockBatchSize = authoring.BlockBatchSize,
-            ColourMarker = GetEntity(authoring.ColourMarker, TransformUsageFlags.Dynamic),
-            EnableSubMeshRendering = authoring.EnableSubMeshRendering,
-            DisableSubMeshRendering = authoring.DisableSubMeshRendering
+            ColourMarker = GetEntity(authoring.ColourMarker, TransformUsageFlags.Dynamic)
         });
     }
 }
@@ -100,16 +95,17 @@ public struct MapData : IComponentData
     public int MaxBlocksToSpiral;
 
     public bool HasMoved;
-
-    public bool EnableSubMeshRendering;
-    public bool DisableSubMeshRendering;
 }
 
 public struct GridCell
 {
     public bool Generated;
     public bool Empty;
+    public int BlockTypeIndex;
+}
 
+public struct BlockType
+{
     public int StrengthToWalkOn;
     public bool ConsumeOnCollision;
     public bool TeleportSafe;
@@ -1647,6 +1643,7 @@ public static class MapExtensionMethods
 public partial struct Map2DStart : ISystem, ISystemStartStop
 {
     NativeArray<GridCell> TilemapManager;
+    NativeArray<BlockType> BlockTypesManager;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
