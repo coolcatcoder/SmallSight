@@ -29,6 +29,9 @@ public class MapMaker : MonoBehaviour
     public int BlockBatchSize = 32;
 
     public GameObject ColourMarker;
+
+    public bool EnableSubMeshRendering;
+    public bool DisableSubMeshRendering;
 }
 
 public class MapMakerBaker : Baker<MapMaker>
@@ -47,7 +50,9 @@ public class MapMakerBaker : Baker<MapMaker>
             MinTeleportBounds = authoring.MinTeleportBounds,
             WorldIndex = authoring.WorldIndex,
             BlockBatchSize = authoring.BlockBatchSize,
-            ColourMarker = GetEntity(authoring.ColourMarker, TransformUsageFlags.Dynamic)
+            ColourMarker = GetEntity(authoring.ColourMarker, TransformUsageFlags.Dynamic),
+            EnableSubMeshRendering = authoring.EnableSubMeshRendering,
+            DisableSubMeshRendering = authoring.DisableSubMeshRendering
         });
     }
 }
@@ -95,6 +100,9 @@ public struct MapData : IComponentData
     public int MaxBlocksToSpiral;
 
     public bool HasMoved;
+
+    public bool EnableSubMeshRendering;
+    public bool DisableSubMeshRendering;
 }
 
 public struct GridCell
@@ -1670,7 +1678,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
     }
 
-    //[BurstCompile] fix this asap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //[BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
@@ -1686,7 +1694,12 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         if (MapInfo.HasMoved || MapInfo.RestartGame)
         {
             Debug.Log("moved or restarted");
-            GenerateBlocks(ref state, ref MapInfo, PlayerInfo.GenerationThickness, PlayerPos);
+
+            ref var TilemapMeshInfo = ref SystemAPI.GetSingletonRW<TilemapMeshData>().ValueRW;
+
+            GenerateBlocks(ref state, ref MapInfo, ref TilemapMeshInfo, PlayerInfo.GenerationThickness, PlayerPos).Complete();
+
+            TilemapMeshInfo.MakeMesh = true;
         }
     }
 
@@ -1702,7 +1715,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 
     //[BurstCompile]
-    public void GenerateBlocks(ref SystemState state, ref MapData MapInfo, int GenerationThickness, int2 CenterPosition)
+    public JobHandle GenerateBlocks(ref SystemState state, ref MapData MapInfo, ref TilemapMeshData TilemapMeshInfo, int GenerationThickness, int2 CenterPosition)
     {
         int BlocksToSearch = GenerationThickness * GenerationThickness;
 
@@ -1752,28 +1765,28 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var GenerateBlocks = new GenerateBlocksJob()
         {
-            DefaultBiome = DefaultBiome.Value,
-            DefaultBiomeBlob = DefaultBiomeBlob.Value,
-            ECB = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
-            RandStruct = MapInfo.RandStruct,
+            BlockQuantity = BlocksToSearch,
+            GridWidth = MapInfo.TilemapSize.x,
+            TilemapManager = TilemapManager,
+            BlocksToRender = TilemapMeshInfo.BlocksInMesh.AsParallelWriter(),
             BlockBiomes = BlockBiomes,
-            BlockBiomeBlobs = BlockBiomeBlobs,
             BlockTerrainNoise = BlockTerrainNoise,
             BlockPositions = BlockPositions,
-            EmptySpaces = EmptySpaces.AsParallelWriter()
         };
 
         var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
         var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
-        var GetBiomesHandle = GetBiomes.Schedule(GetBiomeNoiseHandle); // no parallel sadly....
-        var GetDefaultBiomeHandle = GetDefaultBiome.ScheduleParallel(GetBiomesHandle);
-        var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetDefaultBiomeHandle);
-        var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetNoiseHandle);
+        var GetDefaultBiomeHandle = GetDefaultBiome.ScheduleParallel(GetBiomeNoiseHandle);
+        var GetBiomesHandle = GetBiomes.Schedule(GetDefaultBiomeHandle); // no parallel sadly....
+        var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetBiomesHandle);
+        var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(GetNoiseHandle);
 
         BlockPositions.Dispose(GenerateBlocksHandle);
         BlockBiomeNoise.Dispose(GenerateBlocksHandle);
         BlockBiomes.Dispose(GenerateBlocksHandle);
         BlockTerrainNoise.Dispose(GenerateBlocksHandle);
+
+        return GenerateBlocksHandle;
     }
 
     public unsafe static void Fill<T>(NativeArray<T> array, T value)
@@ -1782,13 +1795,11 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         UnsafeUtility.MemCpyReplicate(array.GetUnsafePtr(), &value, UnsafeUtility.SizeOf<T>(), array.Length);
     }
 
-    [BurstCompile]
     public static int PosToIndex(int2 Pos, int GridWidth)
     {
         return Pos.y * GridWidth + Pos.x;
     }
 
-    [BurstCompile]
     public static int2 IndexToPos(int Index, int GridWidth)
     {
         return new int2(Index%GridWidth,Index/GridWidth);
@@ -1873,6 +1884,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         public NativeArray<int2> BlockPositions;
 
         [ReadOnly]
+        [NativeDisableParallelForRestriction]
         public NativeArray<GridCell> TilemapManager;
 
         [ReadOnly]
@@ -2055,14 +2067,14 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                         {
                             if (TerrainIndex == -1)
                             {
-                                TerrainIndex = i;
+                                TerrainIndex = k;
                             }
                         }
                         else if (BiomeInfo.BiomeRandom.NextFloat() < BiomeFeatures[k].PercentChanceToSpawn / 100)
                         {
                             if (OtherIndex == -1)
                             {
-                                OtherIndex = i;
+                                OtherIndex = k;
                             }
                         }
 
@@ -2082,7 +2094,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                     {
                         int FeatureIndex;
 
-                        FeatureIndex = math.select(TerrainIndex, OtherIndex, TerrainIndex != -1); // if 3rd param, then 1st param, else 2nd param, nice and simple!
+                        FeatureIndex = math.select(TerrainIndex, OtherIndex, TerrainIndex == -1); // if 3rd param, then 1st param, else 2nd param, nice and simple!
 
                         ref GridCell BlockInfo = ref UnsafeElementAt(TilemapManager, PosToIndex(BlockPositions[i], GridWidth));
                         BlockInfo.Generated = true;
@@ -2094,7 +2106,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                         BlockInfo.TeleportSafe = BlockPrefabInfo.TeleportSafe;
                         BlockInfo.YLevel = BlockPrefabInfo.YLevel;
 
-                        BlocksToRender.AddNoResize(new int3(BlockPositions[i].x, )
+                        BlocksToRender.AddNoResize(new int3(BlockPositions[i].x, (int)BlockInfo.YLevel, BlockPositions[i].y)); // y level is an int here, so why was it ever a float???
 
                         //Entity BlockEntity = ECB.Instantiate(i, BiomeFeatures[FeatureIndex].FeaturePrefab);
 
@@ -2172,9 +2184,19 @@ public partial class MapMeshSystem : SystemBase
     protected override void OnCreate()
     {
         RequireForUpdate<MapData>();
+        RequireForUpdate<TilemapMeshData>();
 
-        VertexAttributes = new NativeArray<VertexAttributeDescriptor>(1, Allocator.Persistent);
+        VertexAttributes = new NativeArray<VertexAttributeDescriptor>(2, Allocator.Persistent);
         VertexAttributes[0] = new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3);
+        VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 2);
+    }
+
+    protected override void OnStartRunning()
+    {
+        ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
+        Entity MeshHolderEntity = SystemAPI.GetSingletonEntity<TilemapMeshHolderData>();
+        ref RenderBounds TilemapRenderBoundsInfo = ref SystemAPI.GetComponentRW<RenderBounds>(MeshHolderEntity, false).ValueRW;
+        TilemapRenderBoundsInfo.Value.Extents = new float3(MapInfo.TilemapSize.x, 5, MapInfo.TilemapSize.y);
     }
 
     protected override void OnUpdate()
@@ -2184,6 +2206,8 @@ public partial class MapMeshSystem : SystemBase
 
         if (TilemapMeshInfo.MakeMesh)
         {
+            TilemapMeshInfo.MakeMesh = false;
+
             Entity MeshHolderEntity = SystemAPI.GetSingletonEntity<TilemapMeshHolderData>();
             ref var TilemapMeshComp = ref SystemAPI.GetComponentRW<MaterialMeshInfo>(MeshHolderEntity, false).ValueRW;
             var RenderMeshArrayInfo = EntityManager.GetSharedComponentManaged<RenderMeshArray>(MeshHolderEntity);
@@ -2227,6 +2251,7 @@ public partial class MapMeshSystem : SystemBase
     struct Vertex // this has to match the VertexAttributes somehow
     {
         public float3 Pos;
+        public half2 Norm;
     }
 
     [BurstCompile]
@@ -2254,13 +2279,13 @@ public partial class MapMeshSystem : SystemBase
 
             var Indices = OutputMesh.GetIndexData<int>(); // shouldn't this be uint???
 
-            Indices[i * 6] = i * 4 + 1;
-            Indices[i * 6 + 1] = i * 4;
+            Indices[i * 6] = i * 4;
+            Indices[i * 6 + 1] = i * 4 + 1;
             Indices[i * 6 + 2] = i * 4 + 2;
 
-            Indices[i * 6 + 3] = i * 4;
-            Indices[i * 6 + 4] = i * 4 + 2;
-            Indices[i * 6 + 5] = i * 4 + 3;
+            Indices[i * 6 + 3] = i * 4 + 1;
+            Indices[i * 6 + 4] = i * 4 + 3;
+            Indices[i * 6 + 5] = i * 4 + 2;
 
             SubMeshDescriptor SubMeshInfo = new()
             {
