@@ -7,7 +7,7 @@ using UnityEngine;
 
 public partial struct CleanUpNativeContainers : ISystem, ISystemStartStop
 {
-    NativeList<int3> BlocksInMesh;
+    NativeList<BlockMeshElement> BlocksInMesh;
 
     public void OnCreate(ref SystemState state)
     {

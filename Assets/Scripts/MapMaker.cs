@@ -109,7 +109,7 @@ public struct BlockType
     public int StrengthToWalkOn;
     public bool ConsumeOnCollision;
     public bool TeleportSafe;
-    public float YLevel;
+    public int YLevel;
 
     public float4 VisibleStatsChange;
     public float4 HiddenStatsChange;
@@ -120,11 +120,15 @@ public struct BlockType
     public int PageOn;
 
     //public Entity DecorationEntity; replace with decoration information
+
+    public float2 UV;
+
+    public bool NotNull;
 }
 
 public struct TilemapMeshData : IComponentData
 {
-    public NativeList<int3> BlocksInMesh;
+    public NativeList<BlockMeshElement> BlocksInMesh;
     public bool MakeMesh;
 }
 
@@ -1664,9 +1668,17 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         ref TilemapMeshData TilemapMeshInfo = ref SystemAPI.GetSingletonRW<TilemapMeshData>().ValueRW;
 
-        TilemapMeshInfo.BlocksInMesh = new NativeList<int3>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
+        TilemapMeshInfo.BlocksInMesh = new NativeList<BlockMeshElement>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
 
         TilemapManager = new NativeArray<GridCell>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
+        BlockTypesManager = new NativeArray<BlockType>(SystemAPI.QueryBuilder().WithAll<BlockData>().Build().CalculateEntityCount(), Allocator.Persistent);
+
+        var GetBlockTypes = new GetBlockTypesJob
+        {
+            BlockTypesManager = BlockTypesManager
+        };
+
+        GetBlockTypes.ScheduleParallel(new JobHandle()).Complete();
 
         MapInfo.RandomiseSeeds();
 
@@ -1675,7 +1687,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
@@ -1694,7 +1706,24 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
             ref var TilemapMeshInfo = ref SystemAPI.GetSingletonRW<TilemapMeshData>().ValueRW;
 
-            GenerateBlocks(ref state, ref MapInfo, ref TilemapMeshInfo, PlayerInfo.GenerationThickness, PlayerPos).Complete();
+            int BlockQuantity = PlayerInfo.GenerationThickness * PlayerInfo.GenerationThickness;
+
+            NativeList<int2> PositionsToGenerate = new NativeList<int2>(BlockQuantity, Allocator.Persistent);
+
+            var FindBlocks = new FindBlocksJob()
+            {
+                BlockPositions = PositionsToGenerate.AsParallelWriter(), // should we be using AsParallelReader for any parallel reading occasions?
+                TilemapManager = TilemapManager,
+                GenerationPos = PlayerPos,
+                GenerationThickness = PlayerInfo.GenerationThickness,
+                GridThickness = MapInfo.TilemapSize.x
+            };
+
+            var FindBlocksHandle = FindBlocks.ScheduleParallel(BlockQuantity, MapInfo.BlockBatchSize, new JobHandle());
+
+            FindBlocksHandle.Complete(); // what the hell???
+
+            GenerateBlocks(ref state, FindBlocksHandle, ref MapInfo, ref TilemapMeshInfo, PositionsToGenerate).Complete();
 
             TilemapMeshInfo.MakeMesh = true;
         }
@@ -1704,6 +1733,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     public void OnStopRunning(ref SystemState state)
     {
         TilemapManager.Dispose();
+        BlockTypesManager.Dispose();
     }
 
     public void OnDestroy(ref SystemState state)
@@ -1711,28 +1741,18 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
     }
 
-    //[BurstCompile]
-    public JobHandle GenerateBlocks(ref SystemState state, ref MapData MapInfo, ref TilemapMeshData TilemapMeshInfo, int GenerationThickness, int2 CenterPosition)
+    public JobHandle GenerateBlocks(ref SystemState state, JobHandle Dependency, ref MapData MapInfo, ref TilemapMeshData TilemapMeshInfo, NativeList<int2> PositionsToGenerate)
     {
-        int BlocksToSearch = GenerationThickness * GenerationThickness;
+        int BlockQuantity = PositionsToGenerate.Length;
 
-        NativeArray<int2> BlockPositions = new NativeArray<int2>(BlocksToSearch, Allocator.Persistent);
-        NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlocksToSearch, Allocator.Persistent);
-        NativeArray<Entity> BlockBiomes = new NativeArray<Entity>(BlocksToSearch, Allocator.Persistent);
-        NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlocksToSearch, Allocator.Persistent);
+        NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlockQuantity, Allocator.Persistent);
+        NativeArray<Entity> BlockBiomes = new NativeArray<Entity>(BlockQuantity, Allocator.Persistent);
+        NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlockQuantity, Allocator.Persistent);
         //dispose native containers above using dispose(JobHandle)!!
-
-        var FindBlocks = new FindBlocksJob() // done
-        {
-            BlockPositions = BlockPositions,
-            TilemapManager = TilemapManager,
-            GenerationPos = CenterPosition,
-            GenerationThickness = GenerationThickness
-        };
 
         var GetBiomeNoise = new GetBiomeNoiseJob() //done
         {
-            BlockPositions = BlockPositions,
+            BlockPositions = PositionsToGenerate,
             BlockBiomeNoise = BlockBiomeNoise,
             BiomeNoiseScale = MapInfo.BiomeNoiseScale,
             BiomeSeed = MapInfo.BiomeSeed
@@ -1749,12 +1769,12 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
             BlockBiomeNoise = BlockBiomeNoise,
             BlockBiomes = BlockBiomes,
             WorldIndex = MapInfo.WorldIndex,
-            BlockQuantity = BlocksToSearch
+            BlockQuantity = BlockQuantity
         };
 
         var GetNoise = new GetNoiseJob()
         {
-            BlockPositions = BlockPositions,
+            BlockPositions = PositionsToGenerate,
             BlockTerrainNoise = BlockTerrainNoise,
             Seed = MapInfo.Seed,
             TerrainNoiseScale = MapInfo.TerrainNoiseScale
@@ -1762,29 +1782,106 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
         var GenerateBlocks = new GenerateBlocksJob()
         {
-            BlockQuantity = BlocksToSearch,
+            BlockQuantity = BlockQuantity,
             GridWidth = MapInfo.TilemapSize.x,
+            BlockTypesManager = BlockTypesManager,
             TilemapManager = TilemapManager,
             BlocksToRender = TilemapMeshInfo.BlocksInMesh.AsParallelWriter(),
             BlockBiomes = BlockBiomes,
             BlockTerrainNoise = BlockTerrainNoise,
-            BlockPositions = BlockPositions,
+            BlockPositions = PositionsToGenerate,
         };
 
-        var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
-        var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
+        var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlockQuantity, MapInfo.BlockBatchSize, Dependency);
         var GetDefaultBiomeHandle = GetDefaultBiome.ScheduleParallel(GetBiomeNoiseHandle);
         var GetBiomesHandle = GetBiomes.Schedule(GetDefaultBiomeHandle); // no parallel sadly....
-        var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetBiomesHandle);
+        var GetNoiseHandle = GetNoise.ScheduleParallel(BlockQuantity, MapInfo.BlockBatchSize, GetBiomesHandle);
         var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(GetNoiseHandle);
 
-        BlockPositions.Dispose(GenerateBlocksHandle);
+        PositionsToGenerate.Dispose(GenerateBlocksHandle);
         BlockBiomeNoise.Dispose(GenerateBlocksHandle);
         BlockBiomes.Dispose(GenerateBlocksHandle);
         BlockTerrainNoise.Dispose(GenerateBlocksHandle);
 
         return GenerateBlocksHandle;
     }
+
+    //[System.Obsolete("Use GenerateBlocks() instead!")]
+    //public JobHandle GenerateBlocksOld(ref SystemState state, ref MapData MapInfo, ref TilemapMeshData TilemapMeshInfo, int GenerationThickness, int2 CenterPosition)
+    //{
+    //    int BlocksToSearch = GenerationThickness * GenerationThickness;
+
+    //    NativeArray<int2> BlockPositions = new NativeArray<int2>(BlocksToSearch, Allocator.Persistent);
+    //    NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlocksToSearch, Allocator.Persistent);
+    //    NativeArray<Entity> BlockBiomes = new NativeArray<Entity>(BlocksToSearch, Allocator.Persistent);
+    //    NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlocksToSearch, Allocator.Persistent);
+    //    //dispose native containers above using dispose(JobHandle)!!
+
+    //    var FindBlocks = new FindBlocksJob() // done
+    //    {
+    //        BlockPositions = BlockPositions,
+    //        TilemapManager = TilemapManager,
+    //        GenerationPos = CenterPosition,
+    //        GenerationThickness = GenerationThickness,
+    //        GridThickness = MapInfo.TilemapSize.x
+    //    };
+
+    //    var GetBiomeNoise = new GetBiomeNoiseJob() //done
+    //    {
+    //        BlockPositions = BlockPositions,
+    //        BlockBiomeNoise = BlockBiomeNoise,
+    //        BiomeNoiseScale = MapInfo.BiomeNoiseScale,
+    //        BiomeSeed = MapInfo.BiomeSeed
+    //    };
+
+    //    var GetDefaultBiome = new GetDefaultBiomeJob()
+    //    {
+    //        WorldIndex = MapInfo.WorldIndex,
+    //        BlockBiomes = BlockBiomes
+    //    };
+
+    //    var GetBiomes = new GetBiomesJob()
+    //    {
+    //        BlockBiomeNoise = BlockBiomeNoise,
+    //        BlockBiomes = BlockBiomes,
+    //        WorldIndex = MapInfo.WorldIndex,
+    //        BlockQuantity = BlocksToSearch
+    //    };
+
+    //    var GetNoise = new GetNoiseJob()
+    //    {
+    //        BlockPositions = BlockPositions,
+    //        BlockTerrainNoise = BlockTerrainNoise,
+    //        Seed = MapInfo.Seed,
+    //        TerrainNoiseScale = MapInfo.TerrainNoiseScale
+    //    };
+
+    //    var GenerateBlocks = new GenerateBlocksJob()
+    //    {
+    //        BlockQuantity = BlocksToSearch,
+    //        GridWidth = MapInfo.TilemapSize.x,
+    //        BlockTypesManager = BlockTypesManager,
+    //        TilemapManager = TilemapManager,
+    //        BlocksToRender = TilemapMeshInfo.BlocksInMesh.AsParallelWriter(),
+    //        BlockBiomes = BlockBiomes,
+    //        BlockTerrainNoise = BlockTerrainNoise,
+    //        BlockPositions = BlockPositions,
+    //    };
+
+    //    var FindBlocksHandle = FindBlocks.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, new JobHandle());
+    //    var GetBiomeNoiseHandle = GetBiomeNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, FindBlocksHandle);
+    //    var GetDefaultBiomeHandle = GetDefaultBiome.ScheduleParallel(GetBiomeNoiseHandle);
+    //    var GetBiomesHandle = GetBiomes.Schedule(GetDefaultBiomeHandle); // no parallel sadly....
+    //    var GetNoiseHandle = GetNoise.ScheduleParallel(BlocksToSearch, MapInfo.BlockBatchSize, GetBiomesHandle);
+    //    var GenerateBlocksHandle = GenerateBlocks.ScheduleParallel(GetNoiseHandle);
+
+    //    BlockPositions.Dispose(GenerateBlocksHandle);
+    //    BlockBiomeNoise.Dispose(GenerateBlocksHandle);
+    //    BlockBiomes.Dispose(GenerateBlocksHandle);
+    //    BlockTerrainNoise.Dispose(GenerateBlocksHandle);
+
+    //    return GenerateBlocksHandle;
+    //}
 
     public unsafe static void Fill<T>(NativeArray<T> array, T value)
     where T : unmanaged
@@ -1800,6 +1897,11 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     public static int2 IndexToPos(int Index, int GridWidth)
     {
         return new int2(Index%GridWidth,Index/GridWidth);
+    }
+
+    static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct
+    {
+        return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
     }
 
     [BurstCompile]
@@ -1841,44 +1943,73 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         SystemAPI.GetSingletonRW<PlayerData>().ValueRW.JustTeleported = true;
     }
 
-    //[BurstCompile]
-    //public int2 FindSafePos(ref SystemState state, ref MapData MapInfo, ref TilemapData TilemapInfo)
-    //{
-    //    var SafePos = false;
-    //    int2 BPos = new();
+    public int2 FindSafePos(ref SystemState state, ref MapData MapInfo)
+    {
+        var SafePos = false;
+        int2 BPos = new();
 
-    //    while (!SafePos)
-    //    {
-    //        BPos = MapInfo.RandStruct.NextInt2(MapInfo.MinTeleportBounds.xy, MapInfo.MaxTeleportBounds.xy);
+        while (!SafePos)
+        {
+            BPos = MapInfo.RandStruct.NextInt2(new int2(0,0), MapInfo.TilemapSize);
 
-    //        BlockGenerator2D BlockGen = new BlockGenerator2D
-    //        {
-    //            Pos = BPos,
-    //            BiomeEntity = GetBiomeEntity(MapInfo.WorldIndex, MapInfo.GetBiomeColour2D(BPos), ref state)
-    //        };
+            if (!TilemapManager[PosToIndex(BPos,MapInfo.TilemapSize.x)].Generated)
+            {
+                //GenerateBlock2D(BlockGen, ref MapInfo, ref state);
+            }
 
-    //        if (!MapInfo.GeneratedBlocks2D.ContainsKey(BPos))
-    //        {
-    //            GenerateBlock2D(BlockGen, ref MapInfo, ref state);
-    //        }
+            if (TilemapManager[PosToIndex(BPos, MapInfo.TilemapSize.x)].Empty)
+            {
+                SafePos = true;
+            }
+            else if (BlockTypesManager[TilemapManager[PosToIndex(BPos, MapInfo.TilemapSize.x)].BlockTypeIndex].TeleportSafe)
+            {
+                SafePos = true;
+            }
+        }
 
-    //        if (MapInfo.GeneratedBlocks2D[BPos] == Entity.Null)
-    //        {
-    //            SafePos = true;
-    //        }
-    //        else if (SystemAPI.GetComponent<BlockData>(MapInfo.GeneratedBlocks2D[BPos]).TeleportSafe)
-    //        {
-    //            SafePos = true;
-    //        }
-    //    }
-    //}
+        return BPos;
+    }
+
+    [BurstCompile]
+    public partial struct GetBlockTypesJob : IJobEntity
+    {
+        [WriteOnly]
+        [NativeDisableParallelForRestriction]
+        public NativeArray<BlockType> BlockTypesManager;
+
+        void Execute(ref BlockData BlockInfo)
+        {
+            ref var BlockTypeInfo = ref UnsafeElementAt(BlockTypesManager, BlockInfo.UniqueIndex);
+            BlockTypeInfo.StrengthToWalkOn = BlockInfo.StrengthToWalkOn;
+            BlockTypeInfo.ConsumeOnCollision = BlockInfo.ConsumeOnCollision;
+            BlockTypeInfo.TeleportSafe = BlockInfo.TeleportSafe;
+            BlockTypeInfo.YLevel = BlockInfo.YLevel;
+
+            BlockTypeInfo.VisibleStatsChange = BlockInfo.VisibleStatsChange;
+            BlockTypeInfo.HiddenStatsChange = BlockInfo.HiddenStatsChange;
+
+            BlockTypeInfo.Behaviour = BlockInfo.Behaviour;
+
+            BlockTypeInfo.SectionIn = BlockInfo.SectionIn;
+            BlockTypeInfo.PageOn = BlockInfo.PageOn;
+
+            BlockTypeInfo.UV = BlockInfo.UV;
+
+            if (BlockTypeInfo.NotNull)
+            {
+                Debug.Log("warning duplication of block types");
+                //Debug.Log(BlockInfo.UniqueIndex); Burst: "No."
+            }
+
+            BlockTypeInfo.NotNull = true;
+        }
+    }
 
     [BurstCompile]
     struct FindBlocksJob : IJobFor
     {
         [WriteOnly]
-        [NativeDisableParallelForRestriction]
-        public NativeArray<int2> BlockPositions;
+        public NativeList<int2>.ParallelWriter BlockPositions;
 
         [ReadOnly]
         [NativeDisableParallelForRestriction]
@@ -1897,9 +2028,16 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         {
             int2 Pos = IndexToPos(i, GenerationThickness) + GenerationPos - new int2(GenerationThickness, GenerationThickness) / 2;
 
-            if (!TilemapManager[PosToIndex(Pos,GridThickness)].Generated)
+            int BlockIndex = PosToIndex(Pos, GridThickness);
+
+            if (BlockIndex < 0 || BlockIndex > GridThickness*GridThickness) //grid should be uniform in size, right?
             {
-                BlockPositions[i] = Pos;
+                return;
+            }
+
+            if (!TilemapManager[BlockIndex].Generated)
+            {
+                BlockPositions.AddNoResize(Pos);
             }
         }
 
@@ -1913,7 +2051,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     struct GetBiomeNoiseJob : IJobFor
     {
         [ReadOnly]
-        public NativeArray<int2> BlockPositions;
+        public NativeList<int2> BlockPositions;
 
         [WriteOnly]
         [NativeDisableParallelForRestriction]
@@ -1999,7 +2137,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     struct GetNoiseJob : IJobFor
     {
         [ReadOnly]
-        public NativeArray<int2> BlockPositions;
+        public NativeList<int2> BlockPositions;
 
         [WriteOnly]
         [NativeDisableParallelForRestriction]
@@ -2024,7 +2162,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         }
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     partial struct GenerateBlocksJob : IJobEntity
     {
         [ReadOnly]
@@ -2033,12 +2171,15 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         [ReadOnly]
         public int GridWidth;
 
+        [ReadOnly]
+        public NativeArray<BlockType> BlockTypesManager;
+
         [WriteOnly]
         [NativeDisableParallelForRestriction]
         public NativeArray<GridCell> TilemapManager;
 
         [WriteOnly]
-        public NativeList<int3>.ParallelWriter BlocksToRender;
+        public NativeList<BlockMeshElement>.ParallelWriter BlocksToRender;
 
         [ReadOnly]
         public NativeArray<Entity> BlockBiomes;
@@ -2047,7 +2188,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         public NativeArray<float> BlockTerrainNoise;
 
         [ReadOnly]
-        public NativeArray<int2> BlockPositions;
+        public NativeList<int2> BlockPositions;
 
         public void Execute(ref BiomeData BiomeInfo, ref DynamicBuffer<BiomeFeatureElement> BiomeFeatures, Entity entity)
         {
@@ -2098,12 +2239,13 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 
                         BiomeFeatureElement BlockPrefabInfo = BiomeFeatures[FeatureIndex];
 
-                        BlockInfo.StrengthToWalkOn = BlockPrefabInfo.StrengthToWalkOn;
-                        BlockInfo.ConsumeOnCollision = BlockPrefabInfo.ConsumeOnCollision;
-                        BlockInfo.TeleportSafe = BlockPrefabInfo.TeleportSafe;
-                        BlockInfo.YLevel = BlockPrefabInfo.YLevel;
+                        BlockInfo.BlockTypeIndex = BlockPrefabInfo.TypeIndex;
 
-                        BlocksToRender.AddNoResize(new int3(BlockPositions[i].x, (int)BlockInfo.YLevel, BlockPositions[i].y)); // y level is an int here, so why was it ever a float???
+                        var DebugLocation = new int3(BlockPositions[i].x, BlockTypesManager[BlockInfo.BlockTypeIndex].YLevel, BlockPositions[i].y);
+
+                        //Debug.Log(DebugLocation);
+
+                        BlocksToRender.AddNoResize(new BlockMeshElement() { Position = DebugLocation, UV = BlockTypesManager[BlockInfo.BlockTypeIndex].UV }); // y level is an int here, so why was it ever a float???
 
                         //Entity BlockEntity = ECB.Instantiate(i, BiomeFeatures[FeatureIndex].FeaturePrefab);
 
@@ -2128,32 +2270,9 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
                 }
             }
         }
-
-        static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct
-        {
-            return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
-        }
     }
 
-    [BurstCompile]
-    struct AddEmptyBlocksToHashJob : IJob
-    {
-        [ReadOnly]
-        public NativeList<int2> EmptySpaces;
-
-        [WriteOnly]
-        public NativeHashMap<int2, Entity> TilemapManager;
-
-        public void Execute()
-        {
-            for(int i = 0; i < EmptySpaces.Length; i++)
-            {
-                TilemapManager.Add(EmptySpaces[i], Entity.Null);
-            }
-        }
-    }
-
-    [BurstCompile]
+    [BurstCompile] // this needs fixing
     public partial struct AddBlocksJob : IJobEntity
     {
         [ReadOnly]
@@ -2172,6 +2291,12 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 }
 
+public struct BlockMeshElement
+{
+    public float3 Position;
+    public float2 UV;
+}
+
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 [UpdateAfter(typeof(Map2DStart))]
 public partial class MapMeshSystem : SystemBase
@@ -2185,7 +2310,8 @@ public partial class MapMeshSystem : SystemBase
 
         VertexAttributes = new NativeArray<VertexAttributeDescriptor>(2, Allocator.Persistent);
         VertexAttributes[0] = new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3);
-        VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 2);
+        VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2);
+        //VertexAttributes[2] = new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.Float16, 2);
     }
 
     protected override void OnStartRunning()
@@ -2231,16 +2357,30 @@ public partial class MapMeshSystem : SystemBase
 
         OutputMesh.SetIndexBufferParams(6 * BlockQuantity, IndexFormat.UInt32);
 
-        OutputMesh.subMeshCount = BlockQuantity;
+        OutputMesh.subMeshCount = 1; // for now
 
         var ProcessMeshData = new ProcessMeshDataJob()
         {
-            BlockPositions = TilemapMeshInfo.BlocksInMesh,
+            BlockMeshInfo = TilemapMeshInfo.BlocksInMesh,
             OutputMesh = OutputMesh,
             BlockQuantity = BlockQuantity,
+            UVTileHalfSize = new float2(0.5f, 0.5f) //temporary
         };
 
         ProcessMeshData.ScheduleParallel(BlockQuantity, 64, new JobHandle()).Complete();
+
+        SubMeshDescriptor SubMeshInfo = new()
+        {
+            baseVertex = 0, // for now this is correct, but will be an issue eventually
+            //bounds = SubMeshBounds,
+            //firstVertex = 0,
+            indexCount = 6*BlockQuantity, // 2 triangles with each triangle needing 3 then that for every block
+            indexStart = 0, //potentially lol
+            topology = MeshTopology.Triangles, // 3 indices per face
+            //vertexCount = 4
+        };
+
+        OutputMesh.SetSubMesh(0, SubMeshInfo, MeshUpdateFlags.Default);
 
         Mesh.ApplyAndDisposeWritableMeshData(OutputMeshArray, MeshToSet, MeshUpdateFlags.Default);
     }
@@ -2248,31 +2388,42 @@ public partial class MapMeshSystem : SystemBase
     struct Vertex // this has to match the VertexAttributes somehow
     {
         public float3 Pos;
-        public half2 Norm;
+        public float2 UV;
+        //public half2 Norm;
     }
 
     [BurstCompile]
     struct ProcessMeshDataJob : IJobFor
     {
         [ReadOnly]
-        public NativeList<int3> BlockPositions;
+        public NativeList<BlockMeshElement> BlockMeshInfo;
 
-        //WriteOnly???
         public Mesh.MeshData OutputMesh;
 
         [ReadOnly]
         public int BlockQuantity;
 
+        [ReadOnly]
+        public float2 UVTileHalfSize; // basically x = 1 / UVWidth / 2 , y = 1 / UVHeight / 2
+
         public void Execute(int i)
         {
             var Vertices = OutputMesh.GetVertexData<Vertex>();
 
-            float3 BlockPosition = BlockPositions[i];
+            float3 BlockPosition = BlockMeshInfo[i].Position;
+            float2 BlockUV = BlockMeshInfo[i].UV;
 
             UnsafeElementAt(Vertices, i * 4).Pos = BlockPosition + new float3(0.5f, 0, 0.5f); // top right
+            UnsafeElementAt(Vertices, i * 4).UV = BlockUV + new float2(UVTileHalfSize.x, UVTileHalfSize.y);
+
             UnsafeElementAt(Vertices, i * 4 + 1).Pos = BlockPosition + new float3(0.5f, 0, -0.5f); // top left
+            UnsafeElementAt(Vertices, i * 4 + 1).UV = BlockUV + new float2(-UVTileHalfSize.x, UVTileHalfSize.y);
+
             UnsafeElementAt(Vertices, i * 4 + 2).Pos = BlockPosition + new float3(-0.5f, 0, 0.5f); // bottom right
+            UnsafeElementAt(Vertices, i * 4 + 2).UV = BlockUV + new float2(UVTileHalfSize.x, -UVTileHalfSize.y);
+
             UnsafeElementAt(Vertices, i * 4 + 3).Pos = BlockPosition + new float3(-0.5f, 0, -0.5f); // bottom left
+            UnsafeElementAt(Vertices, i * 4 + 3).UV = BlockUV + new float2(-UVTileHalfSize.x, -UVTileHalfSize.y);
 
             var Indices = OutputMesh.GetIndexData<int>(); // shouldn't this be uint???
 
@@ -2283,19 +2434,6 @@ public partial class MapMeshSystem : SystemBase
             Indices[i * 6 + 3] = i * 4 + 1;
             Indices[i * 6 + 4] = i * 4 + 3;
             Indices[i * 6 + 5] = i * 4 + 2;
-
-            SubMeshDescriptor SubMeshInfo = new()
-            {
-                baseVertex = 0, // for now this is correct, but will be an issue eventually
-                //bounds = SubMeshBounds,
-                //firstVertex = 0,
-                indexCount = 6, // 2 triangles with each triangle needing 3
-                indexStart = i*6, //potentially lol
-                topology = MeshTopology.Triangles, // 3 indices per face
-                //vertexCount = 4
-            };
-
-            OutputMesh.SetSubMesh(i, SubMeshInfo, MeshUpdateFlags.Default); //replace i with something, I don't know yet
         }
 
         static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct

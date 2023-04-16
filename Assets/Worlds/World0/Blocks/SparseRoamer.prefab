@@ -125,4 +125,7 @@ MonoBehaviour:
     z: 0
     w: 0
   Behaviour: 0
+  SectionIn: 0
+  PageOn: 0
   Decorations: []
+  UniqueIndex: 6

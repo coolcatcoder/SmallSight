@@ -114,7 +114,10 @@ MonoBehaviour:
     z: 0
     w: 0
   Behaviour: 4
+  SectionIn: 0
+  PageOn: 0
   Decorations: []
+  UniqueIndex: 7
 --- !u!114 &-6444686613002529295
 MonoBehaviour:
   m_ObjectHideFlags: 0

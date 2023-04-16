@@ -113,8 +113,11 @@ MonoBehaviour:
     z: 0
     w: 0
   Behaviour: 0
+  SectionIn: 0
+  PageOn: 0
   Decorations:
   - {fileID: 1862855503442099543, guid: 2eae6daf038cd2c44903f3bc8d8cb0ad, type: 3}
+  UniqueIndex: 17
 --- !u!114 &4386331956348317525
 MonoBehaviour:
   m_ObjectHideFlags: 0

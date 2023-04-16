@@ -52,21 +52,7 @@ public class BiomeBaker : Baker<Biome>
                     MinNoiseValue = authoring.Features[i].MinNoiseValue,
                     MaxNoiseValue = authoring.Features[i].MaxNoiseValue,
 
-                    StrengthToWalkOn = BlockInfo.StrengthToWalkOn,
-                    ConsumeOnCollision = BlockInfo.ConsumeOnCollision,
-                    TeleportSafe = BlockInfo.TeleportSafe,
-                    YLevel = BlockInfo.YLevel,
-                    DecorationChance = BlockInfo.DecorationChance,
-                    
-                    VisibleStatsChange = BlockInfo.VisibleStatsChange,
-                    HiddenStatsChange = BlockInfo.HiddenStatsChange,
-
-                    Behaviour = BlockInfo.Behaviour,
-
-                    SectionIn = BlockInfo.SectionIn,
-                    PageOn = BlockInfo.PageOn,
-
-                    HasDecorations = BlockInfo.Decorations != null
+                    TypeIndex = BlockInfo.UniqueIndex
                 });
             }
         }
@@ -97,22 +83,7 @@ public struct BiomeFeatureElement : IBufferElementData
     public float MinNoiseValue;
     public float MaxNoiseValue;
 
-    //Kidnapped Below
-    public int StrengthToWalkOn;
-    public bool ConsumeOnCollision;
-    public bool TeleportSafe;
-    public float YLevel;
-    public float DecorationChance;
-
-    public float4 VisibleStatsChange;
-    public float4 HiddenStatsChange;
-
-    public SpecialBehaviour Behaviour;
-
-    public AlmanacWorld SectionIn;
-    public int PageOn;
-
-    public bool HasDecorations;
+    public int TypeIndex;
 }
 
 [System.Serializable]

@@ -7,7 +7,7 @@ public class Block : MonoBehaviour
     public int StrengthToWalkOn;
     public bool ConsumeOnCollision = true;
     public bool TeleportSafe = false;
-    public float YLevel = -2;
+    public int YLevel = -2;
     public float DecorationChance = 100f;
 
     public float4 VisibleStatsChange;
@@ -19,6 +19,10 @@ public class Block : MonoBehaviour
     public int PageOn;
 
     public GameObject[] Decorations;
+
+    public int UniqueIndex;
+
+    public float2 UV;
 }
 
 public class BlockBaker : Baker<Block>
@@ -38,7 +42,9 @@ public class BlockBaker : Baker<Block>
             HasDecorations = authoring.Decorations != null,
             DecorationChance = authoring.DecorationChance,
             SectionIn = authoring.SectionIn,
-            PageOn = authoring.PageOn
+            PageOn = authoring.PageOn,
+            UniqueIndex = authoring.UniqueIndex,
+            UV = authoring.UV
         });
 
         if (authoring.Decorations != null)
@@ -61,7 +67,7 @@ public struct BlockData : IComponentData
     public int StrengthToWalkOn;
     public bool ConsumeOnCollision;
     public bool TeleportSafe;
-    public float YLevel;
+    public int YLevel;
     public float DecorationChance;
 
     public float4 VisibleStatsChange;
@@ -74,6 +80,10 @@ public struct BlockData : IComponentData
 
     public Entity DecorationEntity;
     public bool HasDecorations;
+
+    public int UniqueIndex;
+
+    public float2 UV;
 }
 
 public struct DecorationElement : IBufferElementData
