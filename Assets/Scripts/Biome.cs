@@ -41,8 +41,6 @@ public class BiomeBaker : Baker<Biome>
             var FeatureBuffer = AddBuffer<BiomeFeatureElement>(entity);
             for (int i = 0; i < authoring.Features.Length; i++)
             {
-                Block BlockInfo = authoring.Features[i].FeaturePrefab.GetComponent<Block>();
-
                 FeatureBuffer.Add(new BiomeFeatureElement
                 {
                     //FeaturePrefab = GetEntity(authoring.Features[i].FeaturePrefab, TransformUsageFlags.Dynamic),
@@ -52,7 +50,7 @@ public class BiomeBaker : Baker<Biome>
                     MinNoiseValue = authoring.Features[i].MinNoiseValue,
                     MaxNoiseValue = authoring.Features[i].MaxNoiseValue,
 
-                    TypeIndex = BlockInfo.UniqueIndex
+                    TypeIndex = authoring.Features[i].TypeIndex
                 });
             }
         }
@@ -89,10 +87,12 @@ public struct BiomeFeatureElement : IBufferElementData
 [System.Serializable]
 public struct BiomeAuthoringFeature
 {
-    public GameObject FeaturePrefab;
+    //public GameObject FeaturePrefab;
     public float PercentChanceToSpawn;
     //public int Danger;
     public bool IsTerrain;
     public float MinNoiseValue;
     public float MaxNoiseValue;
+
+    public int TypeIndex;
 }

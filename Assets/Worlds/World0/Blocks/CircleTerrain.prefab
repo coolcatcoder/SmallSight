@@ -101,7 +101,7 @@ MonoBehaviour:
   StrengthToWalkOn: 2
   ConsumeOnCollision: 1
   TeleportSafe: 0
-  YLevel: -1
+  YLevel: 10
   DecorationChance: 0
   VisibleStatsChange:
     x: 0
@@ -118,6 +118,9 @@ MonoBehaviour:
   PageOn: 0
   Decorations: []
   UniqueIndex: 1
+  UV:
+    x: 0.05
+    y: 0.5
 --- !u!114 &4386331956348317525
 MonoBehaviour:
   m_ObjectHideFlags: 0

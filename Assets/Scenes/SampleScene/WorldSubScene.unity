@@ -11808,42 +11808,36 @@ MonoBehaviour:
   BiomeName: Mixed Jungle
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 135a1ea4708e4114fa634469dcb8638c,
-      type: 3}
-    PercentChanceToSpawn: 10
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: d3ef39994069ed74395d322456690556,
-      type: 3}
-    PercentChanceToSpawn: 10
+    TypeIndex: 1
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: b1acd28e6d3dd4d43bc1ea6a2440869d,
-      type: 3}
-    PercentChanceToSpawn: 0.25
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0.25
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.15
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: a5427d912862cf940a9779409a2659a2,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.15
     MaxNoiseValue: 0.3
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.3
     MaxNoiseValue: 1
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.24673194, g: 0.14578143, b: 1, a: 0}
   MaxDistance: 0.4
@@ -14296,30 +14290,26 @@ MonoBehaviour:
   BiomeName: Health Forest
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 135a1ea4708e4114fa634469dcb8638c,
-      type: 3}
-    PercentChanceToSpawn: 30
+  - PercentChanceToSpawn: 30
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: b1acd28e6d3dd4d43bc1ea6a2440869d,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.1
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.1
     MaxNoiseValue: 1
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.7921569, g: 0.18806578, b: 0.14509802, a: 0}
   MaxDistance: 0.3
@@ -15416,30 +15406,26 @@ MonoBehaviour:
   BiomeName: Harm Grove
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: d3ef39994069ed74395d322456690556,
-      type: 3}
-    PercentChanceToSpawn: 30
+  - PercentChanceToSpawn: 30
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 29fa4a11647297947bea521425f3bd53,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.2
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.7921569, g: 0.44173616, b: 0.14509802, a: 0}
   MaxDistance: 0.3
@@ -20377,42 +20363,36 @@ MonoBehaviour:
   BiomeName: Mountains
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 29fa4a11647297947bea521425f3bd53,
-      type: 3}
-    PercentChanceToSpawn: 30
+  - PercentChanceToSpawn: 30
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: a6337dcc232964b4db725809e7ddbc5b,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: d814a71baad9b5046a2664d195bbae75,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 4465c08e7bb42f34c8be494a736bd38d,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.2
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0.5
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
   MaxDistance: 0.2
@@ -24397,30 +24377,26 @@ MonoBehaviour:
   BiomeName: Sparse
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 0.01
+  - PercentChanceToSpawn: 0.01
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: ce9a844d098a12340b21749585bd63dc,
-      type: 3}
-    PercentChanceToSpawn: 0.1
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0.1
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: f7ad1903bb42e1a428c355b19c7ff5bf,
-      type: 3}
-    PercentChanceToSpawn: 0.5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0.5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: a6337dcc232964b4db725809e7ddbc5b,
-      type: 3}
-    PercentChanceToSpawn: 0.02
+    TypeIndex: 1
+  - PercentChanceToSpawn: 0.02
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 0}
   MaxDistance: 0
@@ -33317,36 +33293,31 @@ MonoBehaviour:
   BiomeName: Cactus Carnage
   WorldIndex: 1
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 667bdaa5c39a2304e80b60dcf1f25a72,
-      type: 3}
-    PercentChanceToSpawn: 4
+  - PercentChanceToSpawn: 4
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
-      type: 3}
-    PercentChanceToSpawn: 2
+    TypeIndex: 0
+  - PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 7433d848e8b04fc448c0aed2940d2512,
-      type: 3}
-    PercentChanceToSpawn: 1
+    TypeIndex: 0
+  - PercentChanceToSpawn: 1
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9cf2adf0f0686a44c8d2467c9430547e,
-      type: 3}
-    PercentChanceToSpawn: 1
+    TypeIndex: 0
+  - PercentChanceToSpawn: 1
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.091313645, g: 0.7169812, b: 0.67501736, a: 0}
   MaxDistance: 0.3
@@ -33397,18 +33368,16 @@ MonoBehaviour:
   BiomeName: Nonsense
   WorldIndex: 3
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 10
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
   MaxDistance: 0.5
@@ -34625,6 +34594,7 @@ GameObject:
   - component: {fileID: 736213429}
   - component: {fileID: 736213430}
   - component: {fileID: 736213431}
+  - component: {fileID: 736213432}
   m_Layer: 0
   m_Name: MapStuff
   m_TagString: Untagged
@@ -34708,6 +34678,61 @@ MonoBehaviour:
   - WorldIndex: 3
     Dangerous: 1
     BackGround: {r: 0, g: 0, b: 0, a: 1}
+--- !u!114 &736213432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 736213427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b7ce9bbe4dd1964bb3a99b5c610feca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BlockTypesArray:
+  - StrengthToWalkOn: 2
+    ConsumeOnCollision: 1
+    TeleportSafe: 0
+    YLevel: 2
+    DecorationChance: 0
+    VisibleStatsChange:
+      x: 0
+      y: 0
+      z: 0
+      w: 0
+    HiddenStatsChange:
+      x: 0
+      y: 0
+      z: 0
+      w: 0
+    Behaviour: 4
+    SectionIn: 0
+    PageOn: 0
+    UV:
+      x: 0.05
+      y: 0.5
+  - StrengthToWalkOn: 0
+    ConsumeOnCollision: 1
+    TeleportSafe: 0
+    YLevel: -2
+    DecorationChance: 0
+    VisibleStatsChange:
+      x: -5
+      y: -2
+      z: 0
+      w: 0
+    HiddenStatsChange:
+      x: 0
+      y: 0
+      z: 0
+      w: 0
+    Behaviour: 4
+    SectionIn: 0
+    PageOn: 0
+    UV:
+      x: 0.15
+      y: 0.5
 --- !u!1 &737962747
 GameObject:
   m_ObjectHideFlags: 0
@@ -40348,18 +40373,16 @@ MonoBehaviour:
   BiomeName: Nonsense
   WorldIndex: 2
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 10
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
   MaxDistance: 0.5
@@ -46331,18 +46354,16 @@ MonoBehaviour:
   BiomeName: Mushroom Forest
   WorldIndex: 3
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 4b00823cb0cf97349a117511312428cf,
-      type: 3}
-    PercentChanceToSpawn: 10
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9ce8adef65661964fa42a6047d931155,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.8773585, g: 0.16967781, b: 0.7963304, a: 1}
   MaxDistance: 0.3
@@ -54541,30 +54562,26 @@ MonoBehaviour:
   BiomeName: Grass Land
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: c951f988c981f9045a67370144af4602,
-      type: 3}
-    PercentChanceToSpawn: 10
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 97ee5b7649ca5a34e88a44f1e76ddc22,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 27de0375dcfbde846ba9b45d58ef298a,
-      type: 3}
-    PercentChanceToSpawn: 2
+    TypeIndex: 0
+  - PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: a5427d912862cf940a9779409a2659a2,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.4862745, g: 0.8745098, b: 0.47058824, a: 1}
   MaxDistance: 0.25
@@ -54891,18 +54908,16 @@ MonoBehaviour:
   BiomeName: Nonsense
   WorldIndex: 1
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 10
+  - PercentChanceToSpawn: 10
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
   MaxDistance: 0
@@ -59446,12 +59461,11 @@ MonoBehaviour:
   BiomeName: Nonsense
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 66b625123d9a93140abb5245fdf21ab6,
-      type: 3}
-    PercentChanceToSpawn: 100
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.14901961, g: 0.6745098, b: 0.50980395, a: 1}
   MaxDistance: 0.15
@@ -60208,12 +60222,11 @@ MonoBehaviour:
   BiomeName: Ocean
   WorldIndex: 2
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: bcb4440185164e644a317e29c94fcb9a,
-      type: 3}
-    PercentChanceToSpawn: 100
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 1, g: 1, b: 1, a: 1}
   MaxDistance: 0
@@ -69400,24 +69413,21 @@ MonoBehaviour:
   BiomeName: Nonsense
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: ce9a844d098a12340b21749585bd63dc,
-      type: 3}
-    PercentChanceToSpawn: 50
+  - PercentChanceToSpawn: 50
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.2
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
+    TypeIndex: 0
   ExtraTerrainNoiseScale: -0.1
   ColourSpawn: {r: 0.8980392, g: 0.7294118, b: 0.65882355, a: 1}
   MaxDistance: 0.15
@@ -70685,30 +70695,26 @@ MonoBehaviour:
   BiomeName: Island
   WorldIndex: 2
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: ce9a844d098a12340b21749585bd63dc,
-      type: 3}
-    PercentChanceToSpawn: 20
+  - PercentChanceToSpawn: 20
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9cf2adf0f0686a44c8d2467c9430547e,
-      type: 3}
-    PercentChanceToSpawn: 2
+    TypeIndex: 0
+  - PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
-      type: 3}
-    PercentChanceToSpawn: 2
+    TypeIndex: 0
+  - PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
   MaxDistance: 0.3
@@ -71892,30 +71898,26 @@ MonoBehaviour:
   BiomeName: Thick Slicers
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: d3ef39994069ed74395d322456690556,
-      type: 3}
-    PercentChanceToSpawn: 30
+  - PercentChanceToSpawn: 30
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: 29fa4a11647297947bea521425f3bd53,
-      type: 3}
-    PercentChanceToSpawn: 90
+    TypeIndex: 0
+  - PercentChanceToSpawn: 90
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.05
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.05
     MaxNoiseValue: 1
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.105882354, g: 0.76862746, b: 0.8392157, a: 1}
   MaxDistance: 0.3
@@ -82892,24 +82894,21 @@ MonoBehaviour:
   BiomeName: Grass Land
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 97ee5b7649ca5a34e88a44f1e76ddc22,
-      type: 3}
-    PercentChanceToSpawn: 30
+  - PercentChanceToSpawn: 30
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 27de0375dcfbde846ba9b45d58ef298a,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: a5427d912862cf940a9779409a2659a2,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.34901962, g: 0.3019608, b: 0.23529412, a: 1}
   MaxDistance: 0.2
@@ -84579,30 +84578,26 @@ MonoBehaviour:
   BiomeName: Stamina Vines
   WorldIndex: 0
   Features:
-  - FeaturePrefab: {fileID: 866482175634483713, guid: cf5b33f6fe640d14f998a9c3982242bb,
-      type: 3}
-    PercentChanceToSpawn: 30
+  - PercentChanceToSpawn: 30
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 866482175634483713, guid: b1acd28e6d3dd4d43bc1ea6a2440869d,
-      type: 3}
-    PercentChanceToSpawn: 5
+    TypeIndex: 0
+  - PercentChanceToSpawn: 5
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 2a7cf3bf579a1de439d2a3f78fc9cd8e,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0.2
     MaxNoiseValue: 1
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: d8d2fc0aec1428a478a679bcb12f288a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: 0
     MaxNoiseValue: 0.2
+    TypeIndex: 0
   ExtraTerrainNoiseScale: 0
   ColourSpawn: {r: 0.10899236, g: 0.6698113, b: 0.091625154, a: 0}
   MaxDistance: 0.3
@@ -91024,42 +91019,36 @@ MonoBehaviour:
   BiomeName: Dry River
   WorldIndex: 1
   Features:
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 7433d848e8b04fc448c0aed2940d2512,
-      type: 3}
-    PercentChanceToSpawn: 3
+  - PercentChanceToSpawn: 3
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 9cf2adf0f0686a44c8d2467c9430547e,
-      type: 3}
-    PercentChanceToSpawn: 2
+    TypeIndex: 0
+  - PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: be8067bc385f12144bad011e3643cbe2,
-      type: 3}
-    PercentChanceToSpawn: 2
+    TypeIndex: 0
+  - PercentChanceToSpawn: 2
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 667bdaa5c39a2304e80b60dcf1f25a72,
-      type: 3}
-    PercentChanceToSpawn: 1
+    TypeIndex: 0
+  - PercentChanceToSpawn: 1
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: 94f8a5b53cd9ac14db5543456a4a9453,
-      type: 3}
-    PercentChanceToSpawn: 100
+    TypeIndex: 0
+  - PercentChanceToSpawn: 100
     IsTerrain: 0
     MinNoiseValue: 0
     MaxNoiseValue: 0
-  - FeaturePrefab: {fileID: 1862855503442099543, guid: bcb4440185164e644a317e29c94fcb9a,
-      type: 3}
-    PercentChanceToSpawn: 0
+    TypeIndex: 0
+  - PercentChanceToSpawn: 0
     IsTerrain: 1
     MinNoiseValue: -1
     MaxNoiseValue: -0.5
+    TypeIndex: 0
   ExtraTerrainNoiseScale: -0.075
   ColourSpawn: {r: 0.7169812, g: 0.2807049, b: 0.63440216, a: 0}
   MaxDistance: 0.3

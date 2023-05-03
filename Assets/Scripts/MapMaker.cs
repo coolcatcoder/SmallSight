@@ -102,6 +102,8 @@ public struct GridCell
     public bool Generated;
     public bool Empty;
     public int BlockTypeIndex;
+
+    public float2 OffsetPosition;
 }
 
 public struct BlockType
@@ -110,6 +112,7 @@ public struct BlockType
     public bool ConsumeOnCollision;
     public bool TeleportSafe;
     public int YLevel;
+    public int SubstrateYLevel;
 
     public float4 VisibleStatsChange;
     public float4 HiddenStatsChange;
@@ -119,9 +122,8 @@ public struct BlockType
     public AlmanacWorld SectionIn;
     public int PageOn;
 
-    //public Entity DecorationEntity; replace with decoration information
-
     public float2 UV;
+    public float2 SubstrateUV;
 
     public bool NotNull;
 }
@@ -1657,7 +1659,7 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         state.RequireForUpdate<BiomeData>();
     }
 
-    [BurstCompile]
+    //[BurstCompile]
     public void OnStartRunning(ref SystemState state)
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
@@ -1671,14 +1673,45 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         TilemapMeshInfo.BlocksInMesh = new NativeList<BlockMeshElement>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
 
         TilemapManager = new NativeArray<GridCell>(MapInfo.TilemapSize.x * MapInfo.TilemapSize.y, Allocator.Persistent);
-        BlockTypesManager = new NativeArray<BlockType>(SystemAPI.QueryBuilder().WithAll<BlockData>().Build().CalculateEntityCount(), Allocator.Persistent);
 
-        var GetBlockTypes = new GetBlockTypesJob
+        var BlockTypesBuffer = SystemAPI.GetSingletonBuffer<BlockTypeElement>();
+
+        BlockTypesManager = new NativeArray<BlockType>(BlockTypesBuffer.Length, Allocator.Persistent);
+
+        for (int i = 0; i < BlockTypesBuffer.Length; i++)
         {
-            BlockTypesManager = BlockTypesManager
-        };
+            //BlockTypesManager[i]
 
-        GetBlockTypes.ScheduleParallel(new JobHandle()).Complete();
+            ref var BlockTypeInfo = ref UnsafeElementAt(BlockTypesManager, i);
+
+            BlockTypeInfo.StrengthToWalkOn = BlockTypesBuffer[i].StrengthToWalkOn;
+            BlockTypeInfo.ConsumeOnCollision = BlockTypesBuffer[i].ConsumeOnCollision;
+            BlockTypeInfo.TeleportSafe = BlockTypesBuffer[i].TeleportSafe;
+            BlockTypeInfo.YLevel = BlockTypesBuffer[i].YLevel;
+            BlockTypeInfo.SubstrateYLevel = BlockTypesBuffer[i].SubstrateYLevel;
+
+            BlockTypeInfo.VisibleStatsChange = BlockTypesBuffer[i].VisibleStatsChange;
+            BlockTypeInfo.HiddenStatsChange = BlockTypesBuffer[i].HiddenStatsChange;
+
+            BlockTypeInfo.Behaviour = BlockTypesBuffer[i].Behaviour;
+
+            BlockTypeInfo.SectionIn = BlockTypesBuffer[i].SectionIn;
+            BlockTypeInfo.PageOn = BlockTypesBuffer[i].PageOn;
+
+            BlockTypeInfo.UV = BlockTypesBuffer[i].UV;
+            BlockTypeInfo.SubstrateUV = BlockTypesBuffer[i].SubstrateUV;
+        }
+
+        //int BlockTypesAmount = SystemAPI.QueryBuilder().WithAll<BlockData>().Build().CalculateEntityCount();
+        //Debug.Log(BlockTypesAmount);
+        //BlockTypesManager = new NativeArray<BlockType>(BlockTypesAmount, Allocator.Persistent);
+
+        //var GetBlockTypes = new GetBlockTypesJob
+        //{
+        //    BlockTypesManager = BlockTypesManager
+        //};
+
+        //GetBlockTypes.Schedule(new JobHandle()).Complete();
 
         MapInfo.RandomiseSeeds();
 
@@ -1687,14 +1720,16 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         PlayerInfo.HiddenStats = PlayerInfo.DefaultHiddenStats;
     }
 
-    [BurstCompile]
+    //[BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ref MapData MapInfo = ref SystemAPI.GetSingletonRW<MapData>().ValueRW;
 
         if (MapInfo.RestartGame)
         {
-            RestartGame(ref MapInfo, ref state);
+            ref TilemapMeshData TilemapMeshInfo = ref SystemAPI.GetSingletonRW<TilemapMeshData>().ValueRW;
+
+            RestartGame(ref MapInfo, ref TilemapMeshInfo, ref state);
         }
 
         PlayerData PlayerInfo = SystemAPI.GetSingleton<PlayerData>();
@@ -1748,9 +1783,8 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         NativeArray<float3> BlockBiomeNoise = new NativeArray<float3>(BlockQuantity, Allocator.Persistent);
         NativeArray<Entity> BlockBiomes = new NativeArray<Entity>(BlockQuantity, Allocator.Persistent);
         NativeArray<float> BlockTerrainNoise = new NativeArray<float>(BlockQuantity, Allocator.Persistent);
-        //dispose native containers above using dispose(JobHandle)!!
 
-        var GetBiomeNoise = new GetBiomeNoiseJob() //done
+        var GetBiomeNoise = new GetBiomeNoiseJob()
         {
             BlockPositions = PositionsToGenerate,
             BlockBiomeNoise = BlockBiomeNoise,
@@ -1905,10 +1939,12 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public void RestartGame(ref MapData MapInfo, ref SystemState state)
+    public void RestartGame(ref MapData MapInfo, ref TilemapMeshData TilemapMeshInfo, ref SystemState state)
     {
         MapInfo.RandomiseSeeds();
         unsafe { UnsafeUtility.MemClear(TilemapManager.GetUnsafePtr(), UnsafeUtility.SizeOf<GridCell>() * TilemapManager.Length); }; // acts like .Clear()
+
+        TilemapMeshInfo.BlocksInMesh.Clear();
 
         if (!MapInfo.KeepStats)
         {
@@ -1970,40 +2006,40 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
         return BPos;
     }
 
-    [BurstCompile]
-    public partial struct GetBlockTypesJob : IJobEntity
-    {
-        [WriteOnly]
-        [NativeDisableParallelForRestriction]
-        public NativeArray<BlockType> BlockTypesManager;
+    //[BurstCompile]
+    //public partial struct GetBlockTypesJob : IJobEntity
+    //{
+    //    [WriteOnly]
+    //    [NativeDisableParallelForRestriction]
+    //    public NativeArray<BlockType> BlockTypesManager;
 
-        void Execute(ref BlockData BlockInfo)
-        {
-            ref var BlockTypeInfo = ref UnsafeElementAt(BlockTypesManager, BlockInfo.UniqueIndex);
-            BlockTypeInfo.StrengthToWalkOn = BlockInfo.StrengthToWalkOn;
-            BlockTypeInfo.ConsumeOnCollision = BlockInfo.ConsumeOnCollision;
-            BlockTypeInfo.TeleportSafe = BlockInfo.TeleportSafe;
-            BlockTypeInfo.YLevel = BlockInfo.YLevel;
+    //    void Execute(ref BlockData BlockInfo)
+    //    {
+    //        ref var BlockTypeInfo = ref UnsafeElementAt(BlockTypesManager, BlockInfo.UniqueIndex);
+    //        BlockTypeInfo.StrengthToWalkOn = BlockInfo.StrengthToWalkOn;
+    //        BlockTypeInfo.ConsumeOnCollision = BlockInfo.ConsumeOnCollision;
+    //        BlockTypeInfo.TeleportSafe = BlockInfo.TeleportSafe;
+    //        BlockTypeInfo.YLevel = BlockInfo.YLevel;
 
-            BlockTypeInfo.VisibleStatsChange = BlockInfo.VisibleStatsChange;
-            BlockTypeInfo.HiddenStatsChange = BlockInfo.HiddenStatsChange;
+    //        BlockTypeInfo.VisibleStatsChange = BlockInfo.VisibleStatsChange;
+    //        BlockTypeInfo.HiddenStatsChange = BlockInfo.HiddenStatsChange;
 
-            BlockTypeInfo.Behaviour = BlockInfo.Behaviour;
+    //        BlockTypeInfo.Behaviour = BlockInfo.Behaviour;
 
-            BlockTypeInfo.SectionIn = BlockInfo.SectionIn;
-            BlockTypeInfo.PageOn = BlockInfo.PageOn;
+    //        BlockTypeInfo.SectionIn = BlockInfo.SectionIn;
+    //        BlockTypeInfo.PageOn = BlockInfo.PageOn;
 
-            BlockTypeInfo.UV = BlockInfo.UV;
+    //        BlockTypeInfo.UV = BlockInfo.UV;
 
-            if (BlockTypeInfo.NotNull)
-            {
-                Debug.Log("warning duplication of block types");
-                //Debug.Log(BlockInfo.UniqueIndex); Burst: "No."
-            }
+    //        if (BlockTypeInfo.NotNull)
+    //        {
+    //            Debug.Log("warning duplication of block types");
+    //            Debug.Log("{BlockInfo.UniqueIndex}"); //Burst: "No."
+    //        }
 
-            BlockTypeInfo.NotNull = true;
-        }
-    }
+    //        BlockTypeInfo.NotNull = true;
+    //    }
+    //}
 
     [BurstCompile]
     struct FindBlocksJob : IJobFor
@@ -2048,6 +2084,53 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
+    struct FindBlocksToRenderJob : IJobFor
+    {
+        [WriteOnly]
+        public NativeList<BlockMeshElement>.ParallelWriter BlockPositions;
+
+        [ReadOnly]
+        [NativeDisableParallelForRestriction]
+        public NativeArray<GridCell> TilemapManager;
+
+        [ReadOnly]
+        [NativeDisableParallelForRestriction]
+        NativeArray<BlockType> BlockTypesManager;
+
+        [ReadOnly]
+        public int2 GenerationPos;
+
+        [ReadOnly]
+        public int GenerationThickness;
+
+        [ReadOnly]
+        public int GridThickness;
+
+        public void Execute(int i)
+        {
+            int2 Pos = IndexToPos(i, GenerationThickness) + GenerationPos - new int2(GenerationThickness, GenerationThickness) / 2;
+
+            int BlockIndex = PosToIndex(Pos, GridThickness);
+
+            if (BlockIndex < 0 || BlockIndex > GridThickness * GridThickness) //grid should be uniform in size, right?
+            {
+                return;
+            }
+
+            if ((!TilemapManager[BlockIndex].Empty) && TilemapManager[BlockIndex].Generated)
+            {
+                BlockPositions.AddNoResize(new BlockMeshElement()
+                {
+                    Position = new float3(Pos.x + TilemapManager[BlockIndex].OffsetPosition.x, BlockTypesManager[TilemapManager[BlockIndex].BlockTypeIndex].YLevel, Pos.y + TilemapManager[BlockIndex].OffsetPosition.y),
+                    SubstratePosition = new float3(Pos.x, BlockTypesManager[TilemapManager[BlockIndex].BlockTypeIndex].SubstrateYLevel, Pos.y),
+                    UV = BlockTypesManager[TilemapManager[BlockIndex].BlockTypeIndex].UV,
+                    SubstrateUV = BlockTypesManager[TilemapManager[BlockIndex].BlockTypeIndex].SubstrateUV
+                });
+            }
+        }
+    }
+
+        [BurstCompile]
     struct GetBiomeNoiseJob : IJobFor
     {
         [ReadOnly]
@@ -2294,7 +2377,9 @@ public partial struct Map2DStart : ISystem, ISystemStartStop
 public struct BlockMeshElement
 {
     public float3 Position;
+    public float3 SubstratePosition;
     public float2 UV;
+    public float2 SubstrateUV;
 }
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
@@ -2348,14 +2433,16 @@ public partial class MapMeshSystem : SystemBase
 
     void CreateMesh(Mesh MeshToSet, ref TilemapMeshData TilemapMeshInfo)
     {
+        //Note this is very bad!!!!!!!!!!This does not deal well with substrate which has no off-grid and vice versa!
+
         int BlockQuantity = TilemapMeshInfo.BlocksInMesh.Length;
 
         Mesh.MeshDataArray OutputMeshArray = Mesh.AllocateWritableMeshData(1);
         Mesh.MeshData OutputMesh = OutputMeshArray[0];
 
-        OutputMesh.SetVertexBufferParams(4 * BlockQuantity, VertexAttributes);
+        OutputMesh.SetVertexBufferParams(8 * BlockQuantity + 8, VertexAttributes); // + 8 gives us 2 quads reserved
 
-        OutputMesh.SetIndexBufferParams(6 * BlockQuantity, IndexFormat.UInt32);
+        OutputMesh.SetIndexBufferParams(12 * BlockQuantity + 12, IndexFormat.UInt32); // + 12 gives us 2 quads reserved
 
         OutputMesh.subMeshCount = 1; // for now
 
@@ -2364,7 +2451,7 @@ public partial class MapMeshSystem : SystemBase
             BlockMeshInfo = TilemapMeshInfo.BlocksInMesh,
             OutputMesh = OutputMesh,
             BlockQuantity = BlockQuantity,
-            UVTileHalfSize = new float2(0.5f, 0.5f) //temporary
+            UVTileHalfSize = new float2(0.05f, 0.5f) //temporary
         };
 
         ProcessMeshData.ScheduleParallel(BlockQuantity, 64, new JobHandle()).Complete();
@@ -2374,7 +2461,7 @@ public partial class MapMeshSystem : SystemBase
             baseVertex = 0, // for now this is correct, but will be an issue eventually
             //bounds = SubMeshBounds,
             //firstVertex = 0,
-            indexCount = 6*BlockQuantity, // 2 triangles with each triangle needing 3 then that for every block
+            indexCount = 12*BlockQuantity+12, // 2 triangles with each triangle needing 3 then that for every block which has 1 substrate and 1 off-grid, then +12 for the 2 reserved quads.
             indexStart = 0, //potentially lol
             topology = MeshTopology.Triangles, // 3 indices per face
             //vertexCount = 4
@@ -2410,30 +2497,32 @@ public partial class MapMeshSystem : SystemBase
         {
             var Vertices = OutputMesh.GetVertexData<Vertex>();
 
-            float3 BlockPosition = BlockMeshInfo[i].Position;
-            float2 BlockUV = BlockMeshInfo[i].UV;
+            BlockMeshElement BlockInfo = BlockMeshInfo[i];
 
-            UnsafeElementAt(Vertices, i * 4).Pos = BlockPosition + new float3(0.5f, 0, 0.5f); // top right
-            UnsafeElementAt(Vertices, i * 4).UV = BlockUV + new float2(UVTileHalfSize.x, UVTileHalfSize.y);
+            int VertexStart = i * 8 + 8; // the +8 (and +12 below) are to deal with the reserved pain
+            int IndexStart = i * 12 + 12;
 
-            UnsafeElementAt(Vertices, i * 4 + 1).Pos = BlockPosition + new float3(0.5f, 0, -0.5f); // top left
-            UnsafeElementAt(Vertices, i * 4 + 1).UV = BlockUV + new float2(-UVTileHalfSize.x, UVTileHalfSize.y);
+            UnsafeElementAt(Vertices, VertexStart).Pos = BlockInfo.Position + new float3(0.5f, 0, 0.5f); // top right
+            UnsafeElementAt(Vertices, VertexStart).UV = BlockInfo.SubstrateUV + new float2(UVTileHalfSize.x, UVTileHalfSize.y);
 
-            UnsafeElementAt(Vertices, i * 4 + 2).Pos = BlockPosition + new float3(-0.5f, 0, 0.5f); // bottom right
-            UnsafeElementAt(Vertices, i * 4 + 2).UV = BlockUV + new float2(UVTileHalfSize.x, -UVTileHalfSize.y);
+            UnsafeElementAt(Vertices, VertexStart + 1).Pos = BlockInfo.Position + new float3(0.5f, 0, -0.5f); // top left
+            UnsafeElementAt(Vertices, VertexStart + 1).UV = BlockInfo.SubstrateUV + new float2(-UVTileHalfSize.x, UVTileHalfSize.y);
 
-            UnsafeElementAt(Vertices, i * 4 + 3).Pos = BlockPosition + new float3(-0.5f, 0, -0.5f); // bottom left
-            UnsafeElementAt(Vertices, i * 4 + 3).UV = BlockUV + new float2(-UVTileHalfSize.x, -UVTileHalfSize.y);
+            UnsafeElementAt(Vertices, VertexStart + 2).Pos = BlockInfo.Position + new float3(-0.5f, 0, 0.5f); // bottom right
+            UnsafeElementAt(Vertices, VertexStart + 2).UV = BlockInfo.SubstrateUV + new float2(UVTileHalfSize.x, -UVTileHalfSize.y);
+
+            UnsafeElementAt(Vertices, VertexStart + 3).Pos = BlockInfo.Position + new float3(-0.5f, 0, -0.5f); // bottom left
+            UnsafeElementAt(Vertices, VertexStart + 3).UV = BlockInfo.SubstrateUV + new float2(-UVTileHalfSize.x, -UVTileHalfSize.y);
 
             var Indices = OutputMesh.GetIndexData<int>(); // shouldn't this be uint???
 
-            Indices[i * 6] = i * 4;
-            Indices[i * 6 + 1] = i * 4 + 1;
-            Indices[i * 6 + 2] = i * 4 + 2;
+            Indices[IndexStart] = VertexStart;
+            Indices[IndexStart + 1] = VertexStart + 1;
+            Indices[IndexStart + 2] = VertexStart + 2;
 
-            Indices[i * 6 + 3] = i * 4 + 1;
-            Indices[i * 6 + 4] = i * 4 + 3;
-            Indices[i * 6 + 5] = i * 4 + 2;
+            Indices[IndexStart + 3] = VertexStart + 1;
+            Indices[IndexStart + 4] = VertexStart + 3;
+            Indices[IndexStart + 5] = VertexStart + 2;
         }
 
         static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct
